@@ -179,8 +179,34 @@ class SettingsController extends Controller
                         $messages[] = "Removed existing directory: {$publicStoragePath}";
                     }
                 } else {
-                    File::deleteDirectory($publicStoragePath);
-                    $messages[] = "Removed existing directory: {$publicStoragePath}";
+                    // On Linux/Mac, check if it's a symbolic link using ls command
+                    try {
+                        $output = shell_exec("ls -la '{$publicStoragePath}' 2>/dev/null");
+                        if ($output && strpos($output, '->') !== false) {
+                            // It's a symbolic link, remove it
+                            unlink($publicStoragePath);
+                            $messages[] = "Removed existing symbolic link: {$publicStoragePath}";
+                        } else {
+                            File::deleteDirectory($publicStoragePath);
+                            $messages[] = "Removed existing directory: {$publicStoragePath}";
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback: if shell_exec is disabled, try alternative methods
+                        try {
+                            $realPath = realpath($publicStoragePath);
+                            if ($realPath && $realPath !== $publicStoragePath) {
+                                // It's likely a symbolic link, try to remove it
+                                unlink($publicStoragePath);
+                                $messages[] = "Removed existing symbolic link: {$publicStoragePath}";
+                            } else {
+                                File::deleteDirectory($publicStoragePath);
+                                $messages[] = "Removed existing directory: {$publicStoragePath}";
+                            }
+                        } catch (\Exception $e2) {
+                            File::deleteDirectory($publicStoragePath);
+                            $messages[] = "Removed existing directory: {$publicStoragePath}";
+                        }
+                    }
                 }
             }
 
@@ -209,6 +235,30 @@ class SettingsController extends Controller
                         }
                     } catch (\Exception $e) {
                         // Fallback check
+                    }
+                } else {
+                    // On Linux/Mac, check if it's a symbolic link using ls command
+                    try {
+                        $output = shell_exec("ls -la '{$publicStoragePath}' 2>/dev/null");
+                        if ($output && strpos($output, '->') !== false) {
+                            $isLinked = true;
+                            // Extract target from ls output
+                            preg_match('/->\s+(.+)$/', $output, $matches);
+                            if (isset($matches[1])) {
+                                $target = trim($matches[1]);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback: if shell_exec is disabled, try alternative methods
+                        try {
+                            $realPath = realpath($publicStoragePath);
+                            if ($realPath && $realPath !== $publicStoragePath) {
+                                $isLinked = true;
+                                $target = $realPath;
+                            }
+                        } catch (\Exception $e2) {
+                            // Final fallback check
+                        }
                     }
                 }
             }
@@ -331,12 +381,12 @@ class SettingsController extends Controller
         $publicStoragePath = public_path('storage');
         $publicStorageExists = File::exists($publicStoragePath);
         
-        // Check if it's a link (including Windows junctions)
+        // Check if it's a link (cross-platform)
         $isLinked = false;
         $linkTarget = null;
         
         if ($publicStorageExists) {
-            // Try PHP's is_link first
+            // Try PHP's is_link first (works on Linux/Mac)
             if (is_link($publicStoragePath)) {
                 $isLinked = true;
                 $linkTarget = readlink($publicStoragePath);
@@ -357,6 +407,34 @@ class SettingsController extends Controller
                         // Fallback: if it exists but isn't a regular directory, assume it's linked
                         if (!is_dir($publicStoragePath)) {
                             $isLinked = true;
+                        }
+                    }
+                } else {
+                    // On Linux/Mac, check if it's a symbolic link using ls command
+                    try {
+                        $output = shell_exec("ls -la '{$publicStoragePath}' 2>/dev/null");
+                        if ($output && strpos($output, '->') !== false) {
+                            $isLinked = true;
+                            // Extract target from ls output
+                            preg_match('/->\s+(.+)$/', $output, $matches);
+                            if (isset($matches[1])) {
+                                $linkTarget = trim($matches[1]);
+                            }
+                        }
+                    } catch (\Exception $e) {
+                        // Fallback: if shell_exec is disabled, try alternative methods
+                        // Check if it's a symbolic link by trying to read it
+                        try {
+                            $realPath = realpath($publicStoragePath);
+                            if ($realPath && $realPath !== $publicStoragePath) {
+                                $isLinked = true;
+                                $linkTarget = $realPath;
+                            }
+                        } catch (\Exception $e2) {
+                            // Final fallback: if it exists but isn't a regular directory, assume it's linked
+                            if (!is_dir($publicStoragePath)) {
+                                $isLinked = true;
+                            }
                         }
                     }
                 }
