@@ -20,14 +20,14 @@
     @if(session('success'))
         <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded mb-6">
             <h4 class="font-semibold mb-2">Operation Completed Successfully:</h4>
-            <pre class="text-sm whitespace-pre-wrap">{{ session('success') }}</pre>
+            <div class="text-sm whitespace-pre-wrap font-mono bg-green-100 p-3 rounded border">{{ session('success') }}</div>
         </div>
     @endif
 
     @if(session('error'))
         <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-6">
             <h4 class="font-semibold mb-2">Operation Failed:</h4>
-            <pre class="text-sm whitespace-pre-wrap">{{ session('error') }}</pre>
+            <div class="text-sm whitespace-pre-wrap font-mono bg-red-100 p-3 rounded border">{{ session('error') }}</div>
         </div>
     @endif
 
@@ -111,7 +111,7 @@
     <div class="bg-card p-6 rounded-lg border border-border mb-6">
         <h2 class="text-xl font-semibold text-foreground mb-4">Storage Actions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <form method="POST" action="{{ route('settings.storage.link') }}" class="inline">
+            <form method="POST" action="{{ route('settings.storage.link') }}" class="inline" id="storage-link-form">
                 @csrf
                 <button type="submit" 
                         class="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
@@ -119,7 +119,8 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
-                    Create Storage Link
+                    <span id="storage-link-text">Create Storage Link</span>
+                    <span id="storage-link-loading" class="hidden">Creating...</span>
                 </button>
             </form>
             
@@ -159,5 +160,62 @@
             <p><strong>Note:</strong> Clearing cache will temporarily slow down the application until caches are rebuilt.</p>
         </div>
     </div>
+
+    <!-- Debug Information -->
+    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-3">Debug Information</h3>
+        <div class="text-sm text-gray-800 space-y-2">
+            <p><strong>PHP OS Family:</strong> {{ $storageInfo['debug']['php_os_family'] }}</p>
+            <p><strong>Shell Exec Enabled:</strong> {{ $storageInfo['debug']['shell_exec_enabled'] ? 'Yes' : 'No' }}</p>
+            <p><strong>Symlink Enabled:</strong> {{ $storageInfo['debug']['symlink_enabled'] ? 'Yes' : 'No' }}</p>
+            <p><strong>Public Storage Path:</strong> <code class="bg-gray-100 px-2 py-1 rounded">{{ $storageInfo['debug']['public_storage_path'] }}</code></p>
+            <p><strong>Storage App Path:</strong> <code class="bg-gray-100 px-2 py-1 rounded">{{ $storageInfo['debug']['storage_app_path'] }}</code></p>
+            <p><strong>Storage Public Path:</strong> <code class="bg-gray-100 px-2 py-1 rounded">{{ $storageInfo['debug']['storage_public_path'] }}</code></p>
+        </div>
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const storageLinkForm = document.getElementById('storage-link-form');
+    const storageLinkText = document.getElementById('storage-link-text');
+    const storageLinkLoading = document.getElementById('storage-link-loading');
+    
+    if (storageLinkForm) {
+        storageLinkForm.addEventListener('submit', function(e) {
+            // Show loading state
+            storageLinkText.classList.add('hidden');
+            storageLinkLoading.classList.remove('hidden');
+            
+            // Disable the button to prevent double submission
+            const submitButton = storageLinkForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            
+            // The form will still submit normally, but we've provided visual feedback
+        });
+    }
+    
+    // Auto-hide success/error messages after 10 seconds
+    const successMessage = document.querySelector('.bg-green-50');
+    const errorMessage = document.querySelector('.bg-red-50');
+    
+    if (successMessage) {
+        setTimeout(() => {
+            successMessage.style.opacity = '0';
+            setTimeout(() => {
+                successMessage.remove();
+            }, 500);
+        }, 10000);
+    }
+    
+    if (errorMessage) {
+        setTimeout(() => {
+            errorMessage.style.opacity = '0';
+            setTimeout(() => {
+                errorMessage.remove();
+            }, 500);
+        }, 10000);
+    }
+});
+</script>
 @endsection

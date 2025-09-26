@@ -143,6 +143,16 @@ class SettingsController extends Controller
     {
         $storageInfo = $this->getStorageInfo();
         
+        // Add debug information
+        $storageInfo['debug'] = [
+            'php_os_family' => PHP_OS_FAMILY,
+            'shell_exec_enabled' => function_exists('shell_exec') && !in_array('shell_exec', explode(',', ini_get('disable_functions'))),
+            'symlink_enabled' => function_exists('symlink'),
+            'public_storage_path' => public_path('storage'),
+            'storage_app_path' => storage_path('app'),
+            'storage_public_path' => storage_path('app/public'),
+        ];
+        
         return view('settings.storage', compact('storageInfo'));
     }
 
@@ -214,6 +224,13 @@ class SettingsController extends Controller
             $exitCode = Artisan::call('storage:link');
             $messages[] = "Storage link command executed (exit code: {$exitCode})";
             
+            // Check if the link was actually created
+            if (File::exists($publicStoragePath)) {
+                $messages[] = "Public storage path exists after command";
+            } else {
+                $messages[] = "Warning: Public storage path does not exist after command";
+            }
+            
             // Verify the link was created
             $isLinked = false;
             $target = null;
@@ -268,6 +285,26 @@ class SettingsController extends Controller
                 $messages[] = "Link: {$publicStoragePath} -> {$target}";
             } else {
                 $messages[] = "Warning: Storage link may not have been created properly.";
+                
+                // Try manual fallback if Artisan command failed
+                if ($exitCode !== 0) {
+                    $messages[] = "Attempting manual storage link creation...";
+                    try {
+                        $targetPath = storage_path('app/public');
+                        if (File::exists($targetPath)) {
+                            if (symlink($targetPath, $publicStoragePath)) {
+                                $messages[] = "Manual storage link created successfully!";
+                                $messages[] = "Link: {$publicStoragePath} -> {$targetPath}";
+                            } else {
+                                $messages[] = "Manual storage link creation failed.";
+                            }
+                        } else {
+                            $messages[] = "Target directory does not exist: {$targetPath}";
+                        }
+                    } catch (\Exception $e) {
+                        $messages[] = "Manual storage link creation failed: " . $e->getMessage();
+                    }
+                }
             }
             
             return back()->with('success', implode("\n", $messages));
