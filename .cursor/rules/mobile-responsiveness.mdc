@@ -1,0 +1,66 @@
+---
+alwaysApply: true
+description: Mobile-first responsive design patterns
+---
+
+# Mobile Responsiveness Rules
+
+## Mobile-First Approach
+All components and pages must be designed mobile-first, then enhanced for larger screens.
+
+### Breakpoint Strategy
+Use Tailwind CSS breakpoints consistently:
+- `sm:` - 640px+ (small tablets)
+- `md:` - 768px+ (tablets)
+- `lg:` - 1024px+ (laptops)
+- `xl:` - 1280px+ (desktops)
+
+### Layout Patterns
+```html
+<!-- ✅ Mobile-first grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+<!-- ✅ Responsive spacing -->
+<div class="p-4 sm:p-6 lg:p-8">
+
+<!-- ✅ Responsive text -->
+<h1 class="text-xl sm:text-2xl lg:text-3xl">
+```
+
+### Navigation Requirements
+- Mobile menu must be collapsible using `data-mobile-menu-toggle`
+- Desktop navigation should hide on mobile (`hidden md:flex`)
+- Mobile menu should slide in/out smoothly
+- Touch-friendly button sizes (minimum 44px)
+
+### Form Responsiveness
+```html
+<!-- ✅ Responsive form layout -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  <input class="w-full px-3 py-2 text-sm sm:text-base">
+```
+
+### Image and Media
+- Use responsive images with `max-w-full h-auto`
+- Videos should be responsive with aspect ratio containers
+- Icons should scale appropriately on mobile
+
+### Typography Scaling
+```html
+<!-- ✅ Responsive typography -->
+<h1 class="text-2xl sm:text-3xl lg:text-4xl">
+<p class="text-sm sm:text-base lg:text-lg">
+```
+
+### Spacing Guidelines
+- Use consistent spacing scale: `space-y-4 sm:space-y-6 lg:space-y-8`
+- Padding should increase on larger screens: `p-4 sm:p-6 lg:p-8`
+- Margins should be responsive: `m-4 sm:m-6 lg:m-8`
+
+### Touch Targets
+- Minimum 44px touch targets for interactive elements
+- Adequate spacing between clickable elements
+- Use `touch-manipulation` CSS for better touch response
+
+### Examples from Codebase
+Reference [resources/views/layouts/app.blade.php](mdc:resources/views/layouts/app.blade.php) for navigation patterns and [resources/views/profile/show.blade.php](mdc:resources/views/profile/show.blade.php) for form layouts.

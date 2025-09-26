@@ -1,0 +1,426 @@
+{
+    "map_name": "Masjid First Floor Ramzaan Seat Map (Precise)",
+    "data_range": "A1:BC20",
+    "cell_content_explanation": {
+      "number": "A valid seat number (1-704)",
+      "x": "Blank space / Non-seating area"
+    },
+    "overall_dimensions": {
+      "rows": 20,
+      "columns": 55
+    },
+    "grid_composition": {
+      "total_cells": 1100,
+      "total_seats": 704,
+      "total_blank_cells": 396,
+      "percentage_filled_with_seats": "64.0%"
+    },
+    "column_block_definition": {
+      "left_seating_block": {
+        "description": "Rows 3-14 seating block on the left side of the aisle.",
+        "column_range_1based_alpha": "A-K",
+        "column_range_1based_index": "1-11",
+        "width_in_columns": 11,
+        "seat_number_range": "111-242"
+      },
+      "middle_blank_block": {
+        "description": "Large empty space / walkway down the middle of the floor.",
+        "column_range_1based_alpha": "L-AW",
+        "column_range_1based_index": "12-49",
+        "width_in_columns": 38
+      },
+      "right_seating_block": {
+        "description": "Rows 3-14 seating block on the right side of the aisle.",
+        "column_range_1based_alpha": "AX-BC",
+        "column_range_1based_index": "50-55",
+        "width_in_columns": 6,
+        "seat_number_range": "573-704"
+      }
+    },
+    "row_data_precise": [
+      {
+        "row_number": 1,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "1-55",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 2,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "56-110",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 3,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "111-121",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "578-583",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 4,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "122-132",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "589-594",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 5,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "133-143",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "600-605",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 6,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "144-154",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "611-616",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 7,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "155-165",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "622-627",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 8,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "166-176",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "633-638",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 9,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "177-187",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "644-649",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 10,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "188-198",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "655-660",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 11,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "199-209",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "666-671",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 12,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "210-220",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "677-682",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 13,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "221-231",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "688-693",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 14,
+        "number_of_seats_in_row": 17,
+        "seat_blocks": [
+          {
+            "type": "Left Seating Block",
+            "column_range_1based": "1-11",
+            "seat_range": "232-242",
+            "seat_count": 11
+          },
+          {
+            "type": "Blank Area",
+            "column_range_1based": "12-49",
+            "content": "x",
+            "cell_count": 33
+          },
+          {
+            "type": "Right Seating Block",
+            "column_range_1based": "50-55",
+            "seat_range": "699-704",
+            "seat_count": 6
+          }
+        ]
+      },
+      {
+        "row_number": 15,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "243-297",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 16,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "298-352",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 17,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "353-407",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 18,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "408-462",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 19,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "463-517",
+            "seat_count": 55
+          }
+        ]
+      },
+      {
+        "row_number": 20,
+        "number_of_seats_in_row": 55,
+        "seat_blocks": [
+          {
+            "type": "Full Seating Row",
+            "column_range_1based": "1-55",
+            "seat_range": "518-572",
+            "seat_count": 55
+          }
+        ]
+      }
+    ]
+  }

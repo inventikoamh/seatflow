@@ -1,0 +1,198 @@
+---
+alwaysApply: true
+description: Permission management guidelines for new modules and functionality
+---
+
+# Permission Management Rules
+
+## When Adding New Modules or Functionality
+
+### 1. Permission Naming Convention
+Always follow this naming pattern for permissions:
+- **View**: `view-{module}` (e.g., `view-bookings`, `view-reports`)
+- **Create**: `create-{module}` (e.g., `create-bookings`, `create-reports`)
+- **Edit**: `edit-{module}` (e.g., `edit-bookings`, `edit-reports`)
+- **Delete**: `delete-{module}` (e.g., `delete-bookings`, `delete-reports`)
+- **Manage**: `manage-{module}` (e.g., `manage-bookings`, `manage-reports`) - Full CRUD access
+
+### 2. Required Steps for New Modules
+
+#### A. Create Permission Seeder Entry
+Add to [database/seeders/RolePermissionSeeder.php](mdc:database/seeders/RolePermissionSeeder.php):
+
+```php
+// Example for a new "bookings" module
+$permissions = [
+    // Existing permissions...
+    
+    // Booking Management
+    ['name' => 'View Bookings', 'slug' => 'view-bookings', 'module' => 'bookings', 'description' => 'Can view bookings list'],
+    ['name' => 'Create Bookings', 'slug' => 'create-bookings', 'module' => 'bookings', 'description' => 'Can create new bookings'],
+    ['name' => 'Edit Bookings', 'slug' => 'edit-bookings', 'module' => 'bookings', 'description' => 'Can edit existing bookings'],
+    ['name' => 'Delete Bookings', 'slug' => 'delete-bookings', 'module' => 'bookings', 'description' => 'Can delete bookings'],
+    ['name' => 'Manage Bookings', 'slug' => 'manage-bookings', 'module' => 'bookings', 'description' => 'Full booking management access'],
+];
+```
+
+#### B. Update Controller Middleware
+Add permission checks to controllers in [app/Http/Controllers/](mdc:app/Http/Controllers/):
+
+```php
+public function __construct()
+{
+    $this->middleware('auth');
+    $this->middleware('can:view-bookings')->only(['index', 'show']);
+    $this->middleware('can:create-bookings')->only(['create', 'store']);
+    $this->middleware('can:edit-bookings')->only(['edit', 'update']);
+    $this->middleware('can:delete-bookings')->only(['destroy']);
+}
+```
+
+#### C. Update Blade Views
+Add permission checks in views using [app/Models/User.php](mdc:app/Models/User.php) methods:
+
+```blade
+@can('create-bookings')
+    <a href="{{ route('bookings.create') }}" class="btn btn-primary">Create Booking</a>
+@endcan
+
+@can('edit-bookings')
+    <a href="{{ route('bookings.edit', $booking) }}" class="btn btn-secondary">Edit</a>
+@endcan
+
+@can('delete-bookings')
+    <form method="POST" action="{{ route('bookings.destroy', $booking) }}">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+@endcan
+```
+
+#### D. Update Sidebar Navigation
+Add module links to [resources/views/components/sidebar.blade.php](mdc:resources/views/components/sidebar.blade.php):
+
+```blade
+@can('view-bookings')
+<div class="space-y-1">
+    <button id="bookings-menu-toggle" class="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+        <div class="flex items-center space-x-3">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <!-- Booking icon -->
+            </svg>
+            <span>Bookings</span>
+        </div>
+        <svg class="h-4 w-4 transition-transform" id="bookings-menu-arrow">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+    </button>
+    
+    <div id="bookings-menu" class="hidden ml-6 space-y-1">
+        <a href="{{ route('bookings.index') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+            All Bookings
+        </a>
+        @can('create-bookings')
+        <a href="{{ route('bookings.create') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+            Add Booking
+        </a>
+        @endcan
+    </div>
+</div>
+@endcan
+```
+
+### 3. Permission Assignment Policy
+
+#### DO NOT Automatically Assign to Admin
+- ❌ **Never** automatically assign new permissions to the admin role
+- ❌ **Never** modify existing role assignments in seeders
+- ✅ **Always** inform the developer of permission names
+- ✅ **Let admin assign** permissions through the admin panel
+
+#### Permission Names to Report
+When adding new functionality, always provide this information:
+
+```
+New Permissions Created:
+- view-{module}
+- create-{module} 
+- edit-{module}
+- delete-{module}
+- manage-{module}
+
+Module: {module-name}
+Description: {brief description of functionality}
+
+Note: These permissions are NOT automatically assigned to any role. 
+Please assign them through the admin panel as needed.
+```
+
+### 4. Database Migration Commands
+
+After adding new permissions, run:
+
+```bash
+# Fresh migration with new permissions
+php artisan migrate:fresh --seed
+
+# Or if you want to keep existing data
+php artisan db:seed --class=RolePermissionSeeder
+```
+
+### 5. Testing Permissions
+
+#### Verify Permission Creation
+```bash
+php artisan tinker
+>>> App\Models\Permission::where('module', 'bookings')->get();
+```
+
+#### Test Role Assignment
+```bash
+php artisan tinker
+>>> $admin = App\Models\Role::where('slug', 'admin')->first();
+>>> $admin->permissions()->pluck('name');
+```
+
+### 6. Common Permission Patterns
+
+#### For CRUD Modules:
+- `view-{module}` - List and view details
+- `create-{module}` - Create new records
+- `edit-{module}` - Update existing records  
+- `delete-{module}` - Remove records
+- `manage-{module}` - All CRUD operations
+
+#### For Reporting Modules:
+- `view-{module}-reports` - View reports
+- `export-{module}-reports` - Export data
+- `manage-{module}-reports` - Full report access
+
+#### For Settings Modules:
+- `view-{module}-settings` - View settings
+- `edit-{module}-settings` - Modify settings
+- `manage-{module}-settings` - Full settings access
+
+### 7. Security Best Practices
+
+- ✅ **Always check permissions** in controllers and views
+- ✅ **Use middleware** for route protection
+- ✅ **Validate permissions** on both frontend and backend
+- ✅ **Test permission boundaries** thoroughly
+- ✅ **Document permission requirements** for each module
+- ✅ **Use descriptive permission names** and descriptions
+
+### 8. Example Implementation Checklist
+
+When adding a new "Reports" module:
+
+- [ ] Add permissions to `RolePermissionSeeder.php`
+- [ ] Create `ReportController` with permission middleware
+- [ ] Add permission checks to report views
+- [ ] Update sidebar with report navigation (with permission checks)
+- [ ] Create report routes with middleware
+- [ ] Test permission boundaries
+- [ ] Document permission names for admin assignment
+- [ ] Run database seeder
+- [ ] Verify permissions in admin panel
+
+Remember: **Never auto-assign permissions to admin role. Always let the admin assign them manually through the admin panel.**

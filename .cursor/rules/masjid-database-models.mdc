@@ -1,0 +1,342 @@
+---
+globs: *.php
+description: Database models and Eloquent patterns for Masjid seat allocation
+---
+
+# Masjid Seat Allocation Database Models
+
+## Core Model Structure
+
+### Sabeel Model (Family)
+```php
+// app/Models/Sabeel.php
+class Sabeel extends Model
+{
+    protected $fillable = [
+        'sabeel_no',
+        'sector',
+        'niyaz_takhmeen',
+        'contact_person',
+        'address',
+        'phone',
+        'email'
+    ];
+
+    protected $casts = [
+        'niyaz_takhmeen' => 'decimal:2',
+        'sabeel_no' => 'integer'
+    ];
+
+    // Relationships
+    public function mumineen()
+    {
+        return $this->hasMany(Mumin::class);
+    }
+
+    public function seatAllocations()
+    {
+        return $this->hasMany(SeatAllocation::class);
+    }
+}
+```
+
+### Mumin Model (Individual)
+```php
+// app/Models/Mumin.php
+class Mumin extends Model
+{
+    protected $fillable = [
+        'its_id',
+        'sabeel_id',
+        'name',
+        'gender',
+        'age',
+        'phone',
+        'email',
+        'is_head_of_family'
+    ];
+
+    protected $casts = [
+        'its_id' => 'string', // 8-digit string
+        'age' => 'integer',
+        'is_head_of_family' => 'boolean'
+    ];
+
+    // Relationships
+    public function sabeel()
+    {
+        return $this->belongsTo(Sabeel::class);
+    }
+
+    public function seatAllocations()
+    {
+        return $this->hasMany(SeatAllocation::class);
+    }
+}
+```
+
+### Event Model
+```php
+// app/Models/Event.php
+class Event extends Model
+{
+    protected $fillable = [
+        'name',
+        'type', // 'ramzaan', 'ashara', 'other'
+        'start_date',
+        'end_date',
+        'capacity_men',
+        'capacity_women',
+        'is_active',
+        'allocation_rules'
+    ];
+
+    protected $casts = [
+        'start_date' => 'datetime',
+        'end_date' => 'datetime',
+        'capacity_men' => 'integer',
+        'capacity_women' => 'integer',
+        'is_active' => 'boolean',
+        'allocation_rules' => 'array'
+    ];
+
+    // Relationships
+    public function seatAllocations()
+    {
+        return $this->hasMany(SeatAllocation::class);
+    }
+}
+```
+
+### Masjid Model
+```php
+// app/Models/Masjid.php
+class Masjid extends Model
+{
+    protected $fillable = [
+        'name',
+        'address',
+        'total_capacity',
+        'men_capacity',
+        'women_capacity',
+        'floors',
+        'sections'
+    ];
+
+    protected $casts = [
+        'total_capacity' => 'integer',
+        'men_capacity' => 'integer',
+        'women_capacity' => 'integer',
+        'floors' => 'integer',
+        'sections' => 'array'
+    ];
+
+    // Relationships
+    public function seatAllocations()
+    {
+        return $this->hasMany(SeatAllocation::class);
+    }
+}
+```
+
+### SeatAllocation Model
+```php
+// app/Models/SeatAllocation.php
+class SeatAllocation extends Model
+{
+    protected $fillable = [
+        'event_id',
+        'sabeel_id',
+        'mumin_id',
+        'masjid_id',
+        'floor',
+        'section',
+        'seat_number',
+        'allocation_date',
+        'status', // 'confirmed', 'pending', 'cancelled'
+        'priority_score'
+    ];
+
+    protected $casts = [
+        'allocation_date' => 'datetime',
+        'floor' => 'integer',
+        'seat_number' => 'integer',
+        'priority_score' => 'decimal:2'
+    ];
+
+    // Relationships
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function sabeel()
+    {
+        return $this->belongsTo(Sabeel::class);
+    }
+
+    public function mumin()
+    {
+        return $this->belongsTo(Mumin::class);
+    }
+
+    public function masjid()
+    {
+        return $this->belongsTo(Masjid::class);
+    }
+}
+```
+
+## Database Migration Patterns
+
+### Sabeel Migration
+```php
+Schema::create('sabeels', function (Blueprint $table) {
+    $table->id();
+    $table->integer('sabeel_no')->unique();
+    $table->string('sector');
+    $table->decimal('niyaz_takhmeen', 10, 2)->default(0);
+    $table->string('contact_person');
+    $table->text('address');
+    $table->string('phone')->nullable();
+    $table->string('email')->nullable();
+    $table->timestamps();
+    
+    $table->index(['sector', 'niyaz_takhmeen']);
+});
+```
+
+### Mumin Migration
+```php
+Schema::create('mumineen', function (Blueprint $table) {
+    $table->id();
+    $table->string('its_id', 8)->unique();
+    $table->foreignId('sabeel_id')->constrained()->onDelete('cascade');
+    $table->string('name');
+    $table->enum('gender', ['male', 'female']);
+    $table->integer('age')->nullable();
+    $table->string('phone')->nullable();
+    $table->string('email')->nullable();
+    $table->boolean('is_head_of_family')->default(false);
+    $table->timestamps();
+    
+    $table->index(['sabeel_id', 'gender']);
+});
+```
+
+## Model Scopes and Methods
+
+### Priority Calculation
+```php
+// In Sabeel model
+public function calculatePriorityScore()
+{
+    // Higher niyaz_takhmeen = higher priority
+    return $this->niyaz_takhmeen * 100; // Scale for better sorting
+}
+
+// In SeatAllocation model
+public function scopeByPriority($query)
+{
+    return $query->orderBy('priority_score', 'desc');
+}
+
+public function scopeByGender($query, $gender)
+{
+    return $query->whereHas('mumin', function ($q) use ($gender) {
+        $q->where('gender', $gender);
+    });
+}
+```
+
+## Validation Rules
+
+### Sabeel Validation
+```php
+public static function rules()
+{
+    return [
+        'sabeel_no' => 'required|integer|unique:sabeels,sabeel_no',
+        'sector' => 'required|string|in:ezzi,fakhri,hakimi,shujai',
+        'niyaz_takhmeen' => 'required|numeric|min:0',
+        'contact_person' => 'required|string|max:255',
+        'phone' => 'nullable|string|max:20',
+        'email' => 'nullable|email|max:255'
+    ];
+}
+```
+
+### Mumin Validation
+```php
+public static function rules()
+{
+    return [
+        'its_id' => 'required|string|size:8|unique:mumineen,its_id',
+        'sabeel_id' => 'required|exists:sabeels,id',
+        'name' => 'required|string|max:255',
+        'gender' => 'required|in:male,female',
+        'age' => 'nullable|integer|min:0|max:120',
+        'phone' => 'nullable|string|max:20',
+        'email' => 'nullable|email|max:255'
+    ];
+}
+```
+
+## Query Optimization
+
+### Eager Loading Patterns
+```php
+// Load sabeel with all mumineen
+$sabeels = Sabeel::with('mumineen')->get();
+
+// Load seat allocations with related data
+$allocations = SeatAllocation::with([
+    'sabeel',
+    'mumin',
+    'event',
+    'masjid'
+])->get();
+
+// Load by sector with priority
+$sabeels = Sabeel::where('sector', $sector)
+    ->orderBy('niyaz_takhmeen', 'desc')
+    ->with('mumineen')
+    ->get();
+```
+
+## Business Logic Methods
+
+### Seat Allocation Logic
+```php
+// In Event model
+public function allocateSeats()
+{
+    $sabeels = Sabeel::orderBy('niyaz_takhmeen', 'desc')->get();
+    
+    foreach ($sabeels as $sabeel) {
+        $men = $sabeel->mumineen()->where('gender', 'male')->get();
+        $women = $sabeel->mumineen()->where('gender', 'female')->get();
+        
+        $this->allocateForGender($men, 'male');
+        $this->allocateForGender($women, 'female');
+    }
+}
+
+private function allocateForGender($mumineen, $gender)
+{
+    $capacity = $gender === 'male' ? $this->capacity_men : $this->capacity_women;
+    $allocated = 0;
+    
+    foreach ($mumineen as $mumin) {
+        if ($allocated < $capacity) {
+            SeatAllocation::create([
+                'event_id' => $this->id,
+                'sabeel_id' => $mumin->sabeel_id,
+                'mumin_id' => $mumin->id,
+                'priority_score' => $mumin->sabeel->calculatePriorityScore()
+            ]);
+            $allocated++;
+        }
+    }
+}
+```

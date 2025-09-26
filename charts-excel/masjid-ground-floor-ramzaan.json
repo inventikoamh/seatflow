@@ -1,0 +1,149 @@
+{
+    "explanation_for_ai": {
+      "data_source": "masjid-ground-floor-ramzaan.xlsx - Sheet1.csv",
+      "data_range": "A1:BC21",
+      "structure_type": "Grid_Seating_Map",
+      "data_interpretation": "Each number in the input represents a unique seat number.",
+      "grid_dimensions": {
+        "total_rows": 21,
+        "total_columns": 55,
+        "column_labels_start": "A",
+        "column_labels_end": "BC"
+      },
+      "seating_arrangement_analysis": {
+        "row_structure": "The seating arrangement is organized into 21 rows.",
+        "column_structure": "The seating arrangement is organized into 55 columns (A through BC).",
+        "seats_per_row": "Each of the 21 rows is designed to contain a maximum of 55 seats, although some rows may have fewer filled seats based on the raw data (e.g., Row 1 has 50 numbered seats followed by empty cells).",
+        "seating_pattern": "Seats are numbered sequentially, starting from 1 in the top-left (A1) and proceeding row-by-row, column-by-column, up to 1145 (BC21)."
+      },
+      "detailed_row_analysis": [
+        {
+          "row_number": 1,
+          "seat_number_range": "1 to 50",
+          "number_of_seats": 50,
+          "cell_range": "A1:AX1"
+        },
+        {
+          "row_number": 2,
+          "seat_number_range": "51 to 100",
+          "number_of_seats": 50,
+          "cell_range": "A2:AX2"
+        },
+        {
+          "row_number": 3,
+          "seat_number_range": "101 to 155",
+          "number_of_seats": 55,
+          "cell_range": "A3:BC3"
+        },
+        {
+          "row_number": 4,
+          "seat_number_range": "156 to 210",
+          "number_of_seats": 55,
+          "cell_range": "A4:BC4"
+        },
+        {
+          "row_number": 5,
+          "seat_number_range": "211 to 265",
+          "number_of_seats": 55,
+          "cell_range": "A5:BC5"
+        },
+        {
+          "row_number": 6,
+          "seat_number_range": "266 to 320",
+          "number_of_seats": 55,
+          "cell_range": "A6:BC6"
+        },
+        {
+          "row_number": 7,
+          "seat_number_range": "321 to 375",
+          "number_of_seats": 55,
+          "cell_range": "A7:BC7"
+        },
+        {
+          "row_number": 8,
+          "seat_number_range": "376 to 430",
+          "number_of_seats": 55,
+          "cell_range": "A8:BC8"
+        },
+        {
+          "row_number": 9,
+          "seat_number_range": "431 to 485",
+          "number_of_seats": 55,
+          "cell_range": "A9:BC9"
+        },
+        {
+          "row_number": 10,
+          "seat_number_range": "486 to 540",
+          "number_of_seats": 55,
+          "cell_range": "A10:BC10"
+        },
+        {
+          "row_number": 11,
+          "seat_number_range": "541 to 595",
+          "number_of_seats": 55,
+          "cell_range": "A11:BC11"
+        },
+        {
+          "row_number": 12,
+          "seat_number_range": "596 to 650",
+          "number_of_seats": 55,
+          "cell_range": "A12:BC12"
+        },
+        {
+          "row_number": 13,
+          "seat_number_range": "651 to 705",
+          "number_of_seats": 55,
+          "cell_range": "A13:BC13"
+        },
+        {
+          "row_number": 14,
+          "seat_number_range": "706 to 760",
+          "number_of_seats": 55,
+          "cell_range": "A14:BC14"
+        },
+        {
+          "row_number": 15,
+          "seat_number_range": "761 to 815",
+          "number_of_seats": 55,
+          "cell_range": "A15:BC15"
+        },
+        {
+          "row_number": 16,
+          "seat_number_range": "816 to 870",
+          "number_of_seats": 55,
+          "cell_range": "A16:BC16"
+        },
+        {
+          "row_number": 17,
+          "seat_number_range": "871 to 925",
+          "number_of_seats": 55,
+          "cell_range": "A17:BC17"
+        },
+        {
+          "row_number": 18,
+          "seat_number_range": "926 to 980",
+          "number_of_seats": 55,
+          "cell_range": "A18:BC18"
+        },
+        {
+          "row_number": 19,
+          "seat_number_range": "981 to 1035",
+          "number_of_seats": 55,
+          "cell_range": "A19:BC19"
+        },
+        {
+          "row_number": 20,
+          "seat_number_range": "1036 to 1090",
+          "number_of_seats": 55,
+          "cell_range": "A20:BC20"
+        },
+        {
+          "row_number": 21,
+          "seat_number_range": "1091 to 1145",
+          "number_of_seats": 55,
+          "cell_range": "A21:BC21"
+        }
+      ],
+      "total_seats": 1145
+    }
+  }

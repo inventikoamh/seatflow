@@ -1,0 +1,434 @@
+---
+globs: *.php
+description: Business logic and service patterns for Masjid seat allocation
+---
+
+# Masjid Seat Allocation Business Logic
+
+## Service Layer Architecture
+
+### SeatAllocationService
+```php
+// app/Services/SeatAllocationService.php
+class SeatAllocationService
+{
+    public function allocateSeatsForEvent(Event $event): array
+    {
+        $results = [
+            'allocated' => 0,
+            'pending' => 0,
+            'rejected' => 0,
+            'details' => []
+        ];
+
+        // Get sabeels ordered by contribution priority
+        $sabeels = Sabeel::with('mumineen')
+            ->orderBy('niyaz_takhmeen', 'desc')
+            ->get();
+
+        foreach ($sabeels as $sabeel) {
+            $allocation = $this->allocateForSabeel($sabeel, $event);
+            $results['allocated'] += $allocation['allocated'];
+            $results['pending'] += $allocation['pending'];
+            $results['rejected'] += $allocation['rejected'];
+            $results['details'][] = $allocation;
+        }
+
+        return $results;
+    }
+
+    private function allocateForSabeel(Sabeel $sabeel, Event $event): array
+    {
+        $men = $sabeel->mumineen()->where('gender', 'male')->get();
+        $women = $sabeel->mumineen()->where('gender', 'female')->get();
+
+        $menAllocation = $this->allocateByGender($men, $event, 'male');
+        $womenAllocation = $this->allocateByGender($women, $event, 'female');
+
+        return [
+            'sabeel_no' => $sabeel->sabeel_no,
+            'allocated' => $menAllocation['allocated'] + $womenAllocation['allocated'],
+            'pending' => $menAllocation['pending'] + $womenAllocation['pending'],
+            'rejected' => $menAllocation['rejected'] + $womenAllocation['rejected']
+        ];
+    }
+
+    private function allocateByGender($mumineen, Event $event, string $gender): array
+    {
+        $capacity = $gender === 'male' ? $event->capacity_men : $event->capacity_women;
+        $allocated = SeatAllocation::where('event_id', $event->id)
+            ->whereHas('mumin', function ($q) use ($gender) {
+                $q->where('gender', $gender);
+            })
+            ->count();
+
+        $available = $capacity - $allocated;
+        $allocatedCount = 0;
+        $pendingCount = 0;
+        $rejectedCount = 0;
+
+        foreach ($mumineen as $mumin) {
+            if ($allocatedCount < $available) {
+                $this->createSeatAllocation($mumin, $event);
+                $allocatedCount++;
+            } elseif ($this->canAddToPending($mumin, $event)) {
+                $this->createPendingAllocation($mumin, $event);
+                $pendingCount++;
+            } else {
+                $rejectedCount++;
+            }
+        }
+
+        return [
+            'allocated' => $allocatedCount,
+            'pending' => $pendingCount,
+            'rejected' => $rejectedCount
+        ];
+    }
+
+    private function createSeatAllocation(Mumin $mumin, Event $event): SeatAllocation
+    {
+        return SeatAllocation::create([
+            'event_id' => $event->id,
+            'sabeel_id' => $mumin->sabeel_id,
+            'mumin_id' => $mumin->id,
+            'masjid_id' => $this->getAvailableMasjid($event, $mumin->gender),
+            'floor' => $this->getAvailableFloor($event, $mumin->gender),
+            'section' => $this->getAvailableSection($event, $mumin->gender),
+            'seat_number' => $this->getNextSeatNumber($event, $mumin->gender),
+            'allocation_date' => now(),
+            'status' => 'confirmed',
+            'priority_score' => $mumin->sabeel->calculatePriorityScore()
+        ]);
+    }
+
+    private function createPendingAllocation(Mumin $mumin, Event $event): SeatAllocation
+    {
+        return SeatAllocation::create([
+            'event_id' => $event->id,
+            'sabeel_id' => $mumin->sabeel_id,
+            'mumin_id' => $mumin->id,
+            'status' => 'pending',
+            'priority_score' => $mumin->sabeel->calculatePriorityScore()
+        ]);
+    }
+}
+```
+
+### EventManagementService
+```php
+// app/Services/EventManagementService.php
+class EventManagementService
+{
+    public function createRamzaanEvent(array $data): Event
+    {
+        $event = Event::create([
+            'name' => $data['name'] ?? 'Ramzaan ' . now()->year,
+            'type' => 'ramzaan',
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'capacity_men' => $data['capacity_men'],
+            'capacity_women' => $data['capacity_women'],
+            'is_active' => true,
+            'allocation_rules' => [
+                'priority_based_on_contribution' => true,
+                'gender_separation_required' => true,
+                'family_grouping_preferred' => true,
+                'sector_consideration' => false
+            ]
+        ]);
+
+        return $event;
+    }
+
+    public function createAsharaEvent(array $data): Event
+    {
+        $event = Event::create([
+            'name' => $data['name'] ?? 'Ashara ' . now()->year,
+            'type' => 'ashara',
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'capacity_men' => $data['capacity_men'],
+            'capacity_women' => $data['capacity_women'],
+            'is_active' => true,
+            'allocation_rules' => [
+                'priority_based_on_contribution' => true,
+                'gender_separation_required' => true,
+                'family_grouping_preferred' => true,
+                'sector_consideration' => true, // Ashara may consider sectors
+                'special_requirements' => [
+                    'elderly_preference' => true,
+                    'accessibility_requirements' => true
+                ]
+            ]
+        ]);
+
+        return $event;
+    }
+
+    public function getEventStatistics(Event $event): array
+    {
+        $allocations = SeatAllocation::where('event_id', $event->id)->get();
+        
+        return [
+            'total_allocated' => $allocations->where('status', 'confirmed')->count(),
+            'pending_allocations' => $allocations->where('status', 'pending')->count(),
+            'men_allocated' => $allocations->where('status', 'confirmed')
+                ->whereHas('mumin', function ($q) {
+                    $q->where('gender', 'male');
+                })->count(),
+            'women_allocated' => $allocations->where('status', 'confirmed')
+                ->whereHas('mumin', function ($q) {
+                    $q->where('gender', 'female');
+                })->count(),
+            'capacity_utilization' => [
+                'men' => $this->calculateUtilization($event->capacity_men, 'male', $event),
+                'women' => $this->calculateUtilization($event->capacity_women, 'female', $event)
+            ],
+            'sector_distribution' => $this->getSectorDistribution($event),
+            'contribution_distribution' => $this->getContributionDistribution($event)
+        ];
+    }
+
+    private function calculateUtilization(int $capacity, string $gender, Event $event): float
+    {
+        $allocated = SeatAllocation::where('event_id', $event->id)
+            ->where('status', 'confirmed')
+            ->whereHas('mumin', function ($q) use ($gender) {
+                $q->where('gender', $gender);
+            })->count();
+
+        return $capacity > 0 ? ($allocated / $capacity) * 100 : 0;
+    }
+}
+```
+
+### SabeelManagementService
+```php
+// app/Services/SabeelManagementService.php
+class SabeelManagementService
+{
+    public function registerSabeel(array $data): Sabeel
+    {
+        $sabeel = Sabeel::create([
+            'sabeel_no' => $this->generateSabeelNumber(),
+            'sector' => $data['sector'],
+            'niyaz_takhmeen' => $data['niyaz_takhmeen'] ?? 0,
+            'contact_person' => $data['contact_person'],
+            'address' => $data['address'],
+            'phone' => $data['phone'],
+            'email' => $data['email']
+        ]);
+
+        return $sabeel;
+    }
+
+    public function addMuminToSabeel(Sabeel $sabeel, array $muminData): Mumin
+    {
+        $mumin = Mumin::create([
+            'its_id' => $this->generateITSId(),
+            'sabeel_id' => $sabeel->id,
+            'name' => $muminData['name'],
+            'gender' => $muminData['gender'],
+            'age' => $muminData['age'],
+            'phone' => $muminData['phone'],
+            'email' => $muminData['email'],
+            'is_head_of_family' => $muminData['is_head_of_family'] ?? false
+        ]);
+
+        return $mumin;
+    }
+
+    public function updateContribution(Sabeel $sabeel, float $amount): Sabeel
+    {
+        $sabeel->update(['niyaz_takhmeen' => $amount]);
+        
+        // Recalculate priority scores for existing allocations
+        $this->recalculatePriorityScores($sabeel);
+        
+        return $sabeel;
+    }
+
+    private function generateSabeelNumber(): int
+    {
+        $lastSabeel = Sabeel::orderBy('sabeel_no', 'desc')->first();
+        return $lastSabeel ? $lastSabeel->sabeel_no + 1 : 1001;
+    }
+
+    private function generateITSId(): string
+    {
+        do {
+            $itsId = str_pad(random_int(10000000, 99999999), 8, '0', STR_PAD_LEFT);
+        } while (Mumin::where('its_id', $itsId)->exists());
+        
+        return $itsId;
+    }
+
+    private function recalculatePriorityScores(Sabeel $sabeel): void
+    {
+        SeatAllocation::where('sabeel_id', $sabeel->id)
+            ->update(['priority_score' => $sabeel->calculatePriorityScore()]);
+    }
+}
+```
+
+## Controller Patterns
+
+### EventController
+```php
+// app/Http/Controllers/EventController.php
+class EventController extends Controller
+{
+    public function __construct(
+        private EventManagementService $eventService,
+        private SeatAllocationService $allocationService
+    ) {}
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|in:ramzaan,ashara',
+            'start_date' => 'required|date|after:today',
+            'end_date' => 'required|date|after:start_date',
+            'capacity_men' => 'required|integer|min:1',
+            'capacity_women' => 'required|integer|min:1'
+        ]);
+
+        $event = match($request->type) {
+            'ramzaan' => $this->eventService->createRamzaanEvent($request->all()),
+            'ashara' => $this->eventService->createAsharaEvent($request->all()),
+            default => throw new InvalidArgumentException('Invalid event type')
+        };
+
+        return redirect()->route('events.show', $event)
+            ->with('success', 'Event created successfully');
+    }
+
+    public function allocateSeats(Event $event)
+    {
+        $results = $this->allocationService->allocateSeatsForEvent($event);
+        
+        return response()->json([
+            'message' => 'Seat allocation completed',
+            'results' => $results
+        ]);
+    }
+
+    public function statistics(Event $event)
+    {
+        $statistics = $this->eventService->getEventStatistics($event);
+        
+        return view('events.statistics', compact('event', 'statistics'));
+    }
+}
+```
+
+## Repository Pattern (Optional)
+
+### SeatAllocationRepository
+```php
+// app/Repositories/SeatAllocationRepository.php
+class SeatAllocationRepository
+{
+    public function getByEventAndGender(Event $event, string $gender): Collection
+    {
+        return SeatAllocation::where('event_id', $event->id)
+            ->whereHas('mumin', function ($q) use ($gender) {
+                $q->where('gender', $gender);
+            })
+            ->with(['sabeel', 'mumin', 'masjid'])
+            ->orderBy('priority_score', 'desc')
+            ->get();
+    }
+
+    public function getPendingAllocations(Event $event): Collection
+    {
+        return SeatAllocation::where('event_id', $event->id)
+            ->where('status', 'pending')
+            ->with(['sabeel', 'mumin'])
+            ->orderBy('priority_score', 'desc')
+            ->get();
+    }
+
+    public function getSectorDistribution(Event $event): Collection
+    {
+        return SeatAllocation::where('event_id', $event->id)
+            ->where('status', 'confirmed')
+            ->with('sabeel')
+            ->get()
+            ->groupBy('sabeel.sector')
+            ->map(function ($allocations) {
+                return [
+                    'count' => $allocations->count(),
+                    'men' => $allocations->where('mumin.gender', 'male')->count(),
+                    'women' => $allocations->where('mumin.gender', 'female')->count()
+                ];
+            });
+    }
+}
+```
+
+## Validation Rules
+
+### Event Validation
+```php
+// app/Http/Requests/CreateEventRequest.php
+class CreateEventRequest extends FormRequest
+{
+    public function rules(): array
+    {
+        return [
+            'name' => 'required|string|max:255',
+            'type' => 'required|in:ramzaan,ashara,other',
+            'start_date' => 'required|date|after:today',
+            'end_date' => 'required|date|after:start_date',
+            'capacity_men' => 'required|integer|min:1|max:10000',
+            'capacity_women' => 'required|integer|min:1|max:10000'
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'type.in' => 'Event type must be either ramzaan, ashara, or other',
+            'capacity_men.max' => 'Men capacity cannot exceed 10,000',
+            'capacity_women.max' => 'Women capacity cannot exceed 10,000'
+        ];
+    }
+}
+```
+
+## Event Listeners and Observers
+
+### SeatAllocationObserver
+```php
+// app/Observers/SeatAllocationObserver.php
+class SeatAllocationObserver
+{
+    public function created(SeatAllocation $allocation): void
+    {
+        // Send notification to family
+        $this->notifyFamily($allocation);
+        
+        // Update event statistics
+        $this->updateEventStatistics($allocation->event);
+    }
+
+    public function updated(SeatAllocation $allocation): void
+    {
+        if ($allocation->wasChanged('status')) {
+            $this->handleStatusChange($allocation);
+        }
+    }
+
+    private function notifyFamily(SeatAllocation $allocation): void
+    {
+        // Implementation for sending notifications
+    }
+
+    private function updateEventStatistics(Event $event): void
+    {
+        // Implementation for updating statistics
+    }
+}
+```

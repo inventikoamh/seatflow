@@ -1,0 +1,13 @@
+sabeel_code,sabeel_address,sabeel_sector,sabeel_hof,sabeel_type
+001,Sample Address 1 Saifee Nagar,ezzi,12345678,regular
+002,Sample Address 2 Saifee Nagar,fakhri,87654321,student
+003,Sample Address 3 Saifee Nagar,hakimi,11223344,res_without_sabeel
+004,Sample Address 4 Saifee Nagar,shujai,55667788,moallemeen
+005,Sample Address 5 Saifee Nagar,ezzi,99887766,regular_lock_joint
+006,Sample Address 6 Saifee Nagar,fakhri,44332211,left_sabeel
+007,Sample Address 7 AL MASJID US SAIFEE,al_masjid_us_saifee,11223345,regular
+008,Sample Address 8 Raj Township,raj_township,55667789,student
+009,Sample Address 9 Zainy,zainy,99887767,moallemeen
+010,Sample Address 10 Student Area,student,44332212,regular
+011,Sample Address 11 MTNC Area,mtnc,12345679,regular_lock_joint
+012,Sample Address 12 Unknown Location,unknown,87654322,res_without_sabeel

@@ -1,0 +1,9 @@
+ITS_ID,full_name,sabeel_code,mobile_number,age,gender,type,misaq
+12345678,Ahmad Ali,001,9876543210,35,M,resident,done
+87654321,Fatima Hussain,001,9876543211,32,F,resident,done
+11223344,Hassan Raza,002,9876543212,28,M,mehmaan,not_done
+55667788,Ayesha Khan,002,9876543213,25,F,resident,done
+99887766,Mohammed Yusuf,003,9876543214,45,M,resident,done
+44332211,Zainab Ahmed,003,9876543215,42,F,resident,done
+77665544,Ali Hassan,004,9876543216,22,M,mehmaan,not_done
+33221100,Khadija Ali,004,9876543217,38,F,resident,done

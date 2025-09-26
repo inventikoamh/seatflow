@@ -1,0 +1,76 @@
+---
+alwaysApply: true
+description: Core domain concepts and terminology for Masjid seat allocation system
+---
+
+# Masjid Seat Allocation Domain Concepts
+
+## Core Entities and Terminology
+
+### Family and Individual Management
+- **Sabeel**: A family unit in the Dawoodi Bohra community
+- **Sabeel_no**: Unique numerical code assigned to each family (primary identifier)
+- **Mumin**: Individual member of a family (plural: Mumineen)
+- **ITS_ID**: 8-digit unique numerical identifier for each person/mumin
+
+### Geographic and Organizational Structure
+- **Sector**: Geographic divisions within large residential societies
+  - Example: Saifee Nagar divided into Ezzi, Fakhri, Hakimi, Shujai sectors
+  - Each sector contains 400-500 houses (buildings and bungalows)
+- **Anjuman**: The organizational body that manages community affairs
+- **Masjid**: Large prayer hall with multiple floors and sections
+  - Separate areas for men and women (no common locations)
+  - Different floors and sections for different capacity needs
+
+### Financial and Contribution System
+- **Niyaz_takhmeen**: Financial contribution amount made by families to Jamaat/Anjuman
+- **Jamaat**: Community organization (same as Anjuman)
+- **Contribution Priority**: Higher contributions receive preference in seat allocation
+
+### Event Management
+- **Ramzaan**: Major religious event requiring seat allocation
+- **Ashara**: Major religious event requiring seat allocation
+- **Event-wise Details**: Each event has specific requirements and constraints
+
+## Data Relationships
+
+### Family Hierarchy
+```
+Sabeel (Family)
+├── sabeel_no (unique family identifier)
+├── niyaz_takhmeen (contribution amount)
+├── sector (geographic location)
+└── Mumineen (family members)
+    ├── ITS_ID (8-digit unique identifier)
+    ├── name
+    ├── gender (affects masjid section assignment)
+    └── age/status
+```
+
+### Seat Allocation Logic
+1. **Priority System**: Based on niyaz_takhmeen contribution
+2. **Gender Separation**: Men and women in separate masjid sections
+3. **Sector Consideration**: Geographic proximity may be a factor
+4. **Event-specific Rules**: Different rules for Ramzaan vs Ashara
+
+## Business Rules
+
+### Seat Allocation Principles
+- Higher niyaz_takhmeen = higher priority for seat assignment
+- Gender-based section assignment (mandatory separation)
+- Family-based allocation (sabeel as base unit)
+- Event-specific capacity and requirements
+
+### Data Integrity Requirements
+- sabeel_no must be unique across all families
+- ITS_ID must be unique across all individuals
+- niyaz_takhmeen must be non-negative numeric value
+- Sector must be valid from predefined list
+- Gender field required for masjid section assignment
+
+### Validation Rules
+- ITS_ID must be exactly 8 digits
+- sabeel_no must be numeric and unique
+- Family members must belong to valid sabeel
+- Seat assignments must respect gender separation
+- Contribution amounts must be valid currency values

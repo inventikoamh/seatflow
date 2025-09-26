@@ -1,0 +1,644 @@
+---
+globs: *.blade.php,*.tsx,*.jsx,*.vue
+description: UI patterns and components for Masjid seat allocation system
+---
+
+# Masjid Seat Allocation UI Patterns
+
+## Component Structure
+
+### SabeelCard Component
+```tsx
+// resources/js/components/SabeelCard.tsx
+interface SabeelCardProps {
+  sabeel: Sabeel;
+  showAllocation?: boolean;
+  onEdit?: (sabeel: Sabeel) => void;
+}
+
+export const SabeelCard: React.FC<SabeelCardProps> = ({ sabeel, showAllocation, onEdit }) => {
+  const priorityColor = sabeel.niyaz_takhmeen > 10000 ? 'text-green-600' : 
+                       sabeel.niyaz_takhmeen > 5000 ? 'text-blue-600' : 'text-gray-600';
+
+  return (
+    <div className="bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="font-semibold text-foreground">Sabeel #{sabeel.sabeel_no}</h3>
+          <p className="text-sm text-muted-foreground">{sabeel.contact_person}</p>
+        </div>
+        <span className={`text-sm font-medium ${priorityColor}`}>
+          ₹{sabeel.niyaz_takhmeen.toLocaleString()}
+        </span>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div>
+          <span className="text-muted-foreground">Sector:</span>
+          <span className="ml-1 font-medium capitalize">{sabeel.sector}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">Members:</span>
+          <span className="ml-1 font-medium">{sabeel.mumineen?.length || 0}</span>
+        </div>
+      </div>
+
+      {sabeel.mumineen && (
+        <div className="mt-3">
+          <div className="text-xs text-muted-foreground mb-1">Family Members:</div>
+          <div className="flex flex-wrap gap-1">
+            {sabeel.mumineen.slice(0, 3).map(mumin => (
+              <span key={mumin.id} className="bg-accent text-accent-foreground px-2 py-1 rounded text-xs">
+                {mumin.name} ({mumin.gender === 'male' ? 'M' : 'F'})
+              </span>
+            ))}
+            {sabeel.mumineen.length > 3 && (
+              <span className="text-xs text-muted-foreground">+{sabeel.mumineen.length - 3} more</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showAllocation && sabeel.seat_allocations && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <div className="text-xs text-muted-foreground mb-1">Current Allocations:</div>
+          {sabeel.seat_allocations.map(allocation => (
+            <div key={allocation.id} className="text-xs">
+              <span className={`inline-block w-2 h-2 rounded-full mr-1 ${
+                allocation.status === 'confirmed' ? 'bg-green-500' : 
+                allocation.status === 'pending' ? 'bg-yellow-500' : 'bg-red-500'
+              }`}></span>
+              {allocation.mumin.name} - {allocation.event.name}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {onEdit && (
+        <button
+          onClick={() => onEdit(sabeel)}
+          className="mt-3 w-full bg-primary text-primary-foreground px-3 py-1 rounded text-sm hover:bg-primary/90"
+        >
+          Edit Sabeel
+        </button>
+      )}
+    </div>
+  );
+};
+```
+
+### AllocationDashboard Component
+```tsx
+// resources/js/components/AllocationDashboard.tsx
+interface AllocationDashboardProps {
+  event: Event;
+  statistics: EventStatistics;
+}
+
+export const AllocationDashboard: React.FC<AllocationDashboardProps> = ({ event, statistics }) => {
+  return (
+    <div className="allocation-dashboard">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <StatCard
+          title="Total Allocated"
+          value={statistics.total_allocated}
+          icon="👥"
+          color="green"
+        />
+        <StatCard
+          title="Pending"
+          value={statistics.pending_allocations}
+          icon="⏳"
+          color="yellow"
+        />
+        <StatCard
+          title="Men Allocated"
+          value={statistics.men_allocated}
+          icon="👨"
+          color="blue"
+        />
+        <StatCard
+          title="Women Allocated"
+          value={statistics.women_allocated}
+          icon="👩"
+          color="purple"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <CapacityChart
+          menCapacity={event.capacity_men}
+          womenCapacity={event.capacity_women}
+          menAllocated={statistics.men_allocated}
+          womenAllocated={statistics.women_allocated}
+        />
+        
+        <SectorDistributionChart
+          distribution={statistics.sector_distribution}
+        />
+      </div>
+
+      <div className="mt-6">
+        <ContributionChart
+          distribution={statistics.contribution_distribution}
+        />
+      </div>
+    </div>
+  );
+};
+
+const StatCard: React.FC<{
+  title: string;
+  value: number;
+  icon: string;
+  color: 'green' | 'yellow' | 'blue' | 'purple';
+}> = ({ title, value, icon, color }) => {
+  const colorClasses = {
+    green: 'border-green-200 bg-green-50 text-green-800',
+    yellow: 'border-yellow-200 bg-yellow-50 text-yellow-800',
+    blue: 'border-blue-200 bg-blue-50 text-blue-800',
+    purple: 'border-purple-200 bg-purple-50 text-purple-800'
+  };
+
+  return (
+    <div className={`p-4 rounded-lg border ${colorClasses[color]}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium">{title}</p>
+          <p className="text-2xl font-bold">{value.toLocaleString()}</p>
+        </div>
+        <span className="text-2xl">{icon}</span>
+      </div>
+    </div>
+  );
+};
+```
+
+## Blade Template Patterns
+
+### Main Allocation Layout
+```blade
+{{-- resources/views/layouts/allocation.blade.php --}}
+@extends('layouts.app')
+
+@section('content')
+<div class="allocation-layout">
+    <header class="allocation-header bg-card border-b border-border p-4">
+        <div class="container mx-auto">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-foreground">@yield('page-title')</h1>
+                    <p class="text-muted-foreground">@yield('page-description')</p>
+                </div>
+                
+                <div class="mt-4 md:mt-0 flex gap-2">
+                    @yield('header-actions')
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="allocation-main">
+        <div class="container mx-auto px-4 py-6">
+            @if(session('success'))
+                <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded mb-4">
+                    {{ session('success') }}
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
+                    {{ session('error') }}
+                </div>
+            @endif
+
+            @yield('content')
+        </div>
+    </main>
+</div>
+@endsection
+```
+
+### Sabeel List Template
+```blade
+{{-- resources/views/sabeels/index.blade.php --}}
+@extends('layouts.allocation')
+
+@section('page-title', 'Sabeel Management')
+@section('page-description', 'Manage families and their seat allocations')
+
+@section('header-actions')
+    @can('create-sabeels')
+    <a href="{{ route('sabeels.create') }}" class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+        Add New Sabeel
+    </a>
+    @endcan
+@endsection
+
+@section('content')
+<div class="sabeel-management">
+    <!-- Filter Section -->
+    <div class="filters bg-card p-4 rounded-lg border border-border mb-6">
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label for="sector" class="block text-sm font-medium text-foreground mb-1">Sector</label>
+                <select name="sector" id="sector" class="w-full rounded-md border border-border bg-background px-3 py-2">
+                    <option value="">All Sectors</option>
+                    <option value="ezzi" {{ request('sector') === 'ezzi' ? 'selected' : '' }}>Ezzi</option>
+                    <option value="fakhri" {{ request('sector') === 'fakhri' ? 'selected' : '' }}>Fakhri</option>
+                    <option value="hakimi" {{ request('sector') === 'hakimi' ? 'selected' : '' }}>Hakimi</option>
+                    <option value="shujai" {{ request('sector') === 'shujai' ? 'selected' : '' }}>Shujai</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="min_contribution" class="block text-sm font-medium text-foreground mb-1">Min Contribution</label>
+                <input type="number" name="min_contribution" id="min_contribution" 
+                       value="{{ request('min_contribution') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2" 
+                       placeholder="0">
+            </div>
+            
+            <div>
+                <label for="search" class="block text-sm font-medium text-foreground mb-1">Search</label>
+                <input type="text" name="search" id="search" 
+                       value="{{ request('search') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2" 
+                       placeholder="Sabeel No, Name...">
+            </div>
+            
+            <div class="flex items-end">
+                <button type="submit" class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 mr-2">
+                    Filter
+                </button>
+                <a href="{{ route('sabeels.index') }}" class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-card p-4 rounded-lg border border-border">
+            <h3 class="font-semibold text-foreground">Total Sabeels</h3>
+            <p class="text-2xl font-bold text-primary">{{ $statistics['total_sabeels'] }}</p>
+        </div>
+        
+        <div class="bg-card p-4 rounded-lg border border-border">
+            <h3 class="font-semibold text-foreground">Total Mumineen</h3>
+            <p class="text-2xl font-bold text-primary">{{ $statistics['total_mumineen'] }}</p>
+        </div>
+        
+        <div class="bg-card p-4 rounded-lg border border-border">
+            <h3 class="font-semibold text-foreground">Total Contributions</h3>
+            <p class="text-2xl font-bold text-primary">₹{{ number_format($statistics['total_contributions']) }}</p>
+        </div>
+        
+        <div class="bg-card p-4 rounded-lg border border-border">
+            <h3 class="font-semibold text-foreground">Avg Contribution</h3>
+            <p class="text-2xl font-bold text-primary">₹{{ number_format($statistics['avg_contribution']) }}</p>
+        </div>
+    </div>
+
+    <!-- Sabeel Grid -->
+    <div class="sabeel-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        @forelse($sabeels as $sabeel)
+            <div class="sabeel-card bg-card border border-border rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start mb-3">
+                    <div>
+                        <h3 class="font-semibold text-foreground">Sabeel #{{ $sabeel->sabeel_no }}</h3>
+                        <p class="text-sm text-muted-foreground">{{ $sabeel->contact_person }}</p>
+                    </div>
+                    <span class="text-sm font-medium {{ $sabeel->niyaz_takhmeen > 10000 ? 'text-green-600' : ($sabeel->niyaz_takhmeen > 5000 ? 'text-blue-600' : 'text-gray-600') }}">
+                        ₹{{ number_format($sabeel->niyaz_takhmeen) }}
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                    <div>
+                        <span class="text-muted-foreground">Sector:</span>
+                        <span class="ml-1 font-medium capitalize">{{ $sabeel->sector }}</span>
+                    </div>
+                    <div>
+                        <span class="text-muted-foreground">Members:</span>
+                        <span class="ml-1 font-medium">{{ $sabeel->mumineen_count }}</span>
+                    </div>
+                </div>
+
+                <div class="text-xs text-muted-foreground mb-2">Recent Members:</div>
+                <div class="flex flex-wrap gap-1 mb-3">
+                    @foreach($sabeel->mumineen->take(3) as $mumin)
+                        <span class="bg-accent text-accent-foreground px-2 py-1 rounded text-xs">
+                            {{ $mumin->name }} ({{ $mumin->gender === 'male' ? 'M' : 'F' }})
+                        </span>
+                    @endforeach
+                    @if($sabeel->mumineen->count() > 3)
+                        <span class="text-xs text-muted-foreground">+{{ $sabeel->mumineen->count() - 3 }} more</span>
+                    @endif
+                </div>
+
+                <div class="flex gap-2">
+                    @can('view-sabeels')
+                    <a href="{{ route('sabeels.show', $sabeel) }}" 
+                       class="flex-1 bg-secondary text-secondary-foreground px-3 py-1 rounded text-sm text-center hover:bg-secondary/90">
+                        View
+                    </a>
+                    @endcan
+                    
+                    @can('edit-sabeels')
+                    <a href="{{ route('sabeels.edit', $sabeel) }}" 
+                       class="flex-1 bg-primary text-primary-foreground px-3 py-1 rounded text-sm text-center hover:bg-primary/90">
+                        Edit
+                    </a>
+                    @endcan
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full text-center py-8">
+                <p class="text-muted-foreground">No sabeels found matching your criteria.</p>
+                @can('create-sabeels')
+                <a href="{{ route('sabeels.create') }}" class="inline-block mt-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+                    Add First Sabeel
+                </a>
+                @endcan
+            </div>
+        @endforelse
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6">
+        {{ $sabeels->links() }}
+    </div>
+</div>
+@endsection
+```
+
+## Form Components
+
+### Sabeel Form Component
+```blade
+{{-- resources/views/components/sabeel-form.blade.php --}}
+<form method="POST" action="{{ $action }}" class="sabeel-form space-y-6">
+    @csrf
+    @if($method ?? false)
+        @method($method)
+    @endif
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Sabeel Information -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-foreground">Sabeel Information</h3>
+            
+            <div>
+                <label for="sabeel_no" class="block text-sm font-medium text-foreground mb-1">
+                    Sabeel Number <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="sabeel_no" id="sabeel_no" 
+                       value="{{ old('sabeel_no', $sabeel->sabeel_no ?? '') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2 @error('sabeel_no') border-red-500 @enderror"
+                       {{ isset($sabeel) ? 'readonly' : 'required' }}>
+                @error('sabeel_no')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="contact_person" class="block text-sm font-medium text-foreground mb-1">
+                    Contact Person <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="contact_person" id="contact_person" 
+                       value="{{ old('contact_person', $sabeel->contact_person ?? '') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2 @error('contact_person') border-red-500 @enderror"
+                       required>
+                @error('contact_person')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="sector" class="block text-sm font-medium text-foreground mb-1">
+                    Sector <span class="text-red-500">*</span>
+                </label>
+                <select name="sector" id="sector" 
+                        class="w-full rounded-md border border-border bg-background px-3 py-2 @error('sector') border-red-500 @enderror"
+                        required>
+                    <option value="">Select Sector</option>
+                    <option value="ezzi" {{ old('sector', $sabeel->sector ?? '') === 'ezzi' ? 'selected' : '' }}>Ezzi</option>
+                    <option value="fakhri" {{ old('sector', $sabeel->sector ?? '') === 'fakhri' ? 'selected' : '' }}>Fakhri</option>
+                    <option value="hakimi" {{ old('sector', $sabeel->sector ?? '') === 'hakimi' ? 'selected' : '' }}>Hakimi</option>
+                    <option value="shujai" {{ old('sector', $sabeel->sector ?? '') === 'shujai' ? 'selected' : '' }}>Shujai</option>
+                </select>
+                @error('sector')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="niyaz_takhmeen" class="block text-sm font-medium text-foreground mb-1">
+                    Niyaz Takhmeen (₹) <span class="text-red-500">*</span>
+                </label>
+                <input type="number" name="niyaz_takhmeen" id="niyaz_takhmeen" 
+                       value="{{ old('niyaz_takhmeen', $sabeel->niyaz_takhmeen ?? 0) }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2 @error('niyaz_takhmeen') border-red-500 @enderror"
+                       min="0" step="0.01" required>
+                @error('niyaz_takhmeen')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+
+        <!-- Contact Information -->
+        <div class="space-y-4">
+            <h3 class="text-lg font-semibold text-foreground">Contact Information</h3>
+            
+            <div>
+                <label for="address" class="block text-sm font-medium text-foreground mb-1">
+                    Address <span class="text-red-500">*</span>
+                </label>
+                <textarea name="address" id="address" rows="3"
+                          class="w-full rounded-md border border-border bg-background px-3 py-2 @error('address') border-red-500 @enderror"
+                          required>{{ old('address', $sabeel->address ?? '') }}</textarea>
+                @error('address')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="phone" class="block text-sm font-medium text-foreground mb-1">Phone</label>
+                <input type="tel" name="phone" id="phone" 
+                       value="{{ old('phone', $sabeel->phone ?? '') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2 @error('phone') border-red-500 @enderror">
+                @error('phone')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
+                <label for="email" class="block text-sm font-medium text-foreground mb-1">Email</label>
+                <input type="email" name="email" id="email" 
+                       value="{{ old('email', $sabeel->email ?? '') }}" 
+                       class="w-full rounded-md border border-border bg-background px-3 py-2 @error('email') border-red-500 @enderror">
+                @error('email')
+                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
+    </div>
+
+    <div class="flex justify-end gap-4 pt-6 border-t border-border">
+        <a href="{{ route('sabeels.index') }}" 
+           class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90">
+            Cancel
+        </a>
+        <button type="submit" 
+                class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90">
+            {{ isset($sabeel) ? 'Update Sabeel' : 'Create Sabeel' }}
+        </button>
+    </div>
+</form>
+```
+
+## Mobile-Responsive Patterns
+
+### Mobile Navigation
+```blade
+{{-- resources/views/components/mobile-allocation-nav.blade.php --}}
+<nav class="mobile-allocation-nav md:hidden bg-card border-b border-border">
+    <div class="flex items-center justify-between p-4">
+        <h2 class="font-semibold text-foreground">{{ $title ?? 'Allocation' }}</h2>
+        <button 
+            id="mobile-menu-toggle" 
+            class="p-2 rounded-md hover:bg-accent"
+            data-mobile-menu-toggle
+        >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+        </button>
+    </div>
+    
+    <div id="mobile-menu" class="hidden px-4 pb-4">
+        <div class="space-y-2">
+            <a href="{{ route('dashboard') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md">
+                Dashboard
+            </a>
+            <a href="{{ route('sabeels.index') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md">
+                Sabeels
+            </a>
+            <a href="{{ route('events.index') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md">
+                Events
+            </a>
+            <a href="{{ route('allocations.index') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md">
+                Allocations
+            </a>
+        </div>
+    </div>
+</nav>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggle = document.getElementById('mobile-menu-toggle');
+    const menu = document.getElementById('mobile-menu');
+    
+    if (toggle && menu) {
+        toggle.addEventListener('click', function() {
+            menu.classList.toggle('hidden');
+        });
+    }
+});
+</script>
+```
+
+## Color and Status Indicators
+
+### Status Badge Component
+```blade
+{{-- resources/views/components/status-badge.blade.php --}}
+@php
+$statusClasses = [
+    'confirmed' => 'bg-green-100 text-green-800 border-green-200',
+    'pending' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    'cancelled' => 'bg-red-100 text-red-800 border-red-200',
+    'draft' => 'bg-gray-100 text-gray-800 border-gray-200'
+];
+
+$priorityClasses = [
+    'high' => 'bg-red-100 text-red-800 border-red-200',
+    'medium' => 'bg-blue-100 text-blue-800 border-blue-200',
+    'low' => 'bg-gray-100 text-gray-800 border-gray-200'
+];
+
+$genderClasses = [
+    'male' => 'bg-blue-100 text-blue-800 border-blue-200',
+    'female' => 'bg-pink-100 text-pink-800 border-pink-200'
+];
+
+$classes = match($type) {
+    'status' => $statusClasses[$value] ?? $statusClasses['draft'],
+    'priority' => $priorityClasses[$value] ?? $priorityClasses['low'],
+    'gender' => $genderClasses[$value] ?? $genderClasses['male'],
+    default => 'bg-gray-100 text-gray-800 border-gray-200'
+};
+@endphp
+
+<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border {{ $classes }}">
+    {{ ucfirst($value) }}
+</span>
+```
+
+## Interactive Features
+
+### Live Search Component
+```tsx
+// resources/js/components/LiveSearch.tsx
+interface LiveSearchProps {
+  placeholder: string;
+  onSearch: (query: string) => void;
+  debounceMs?: number;
+}
+
+export const LiveSearch: React.FC<LiveSearchProps> = ({ 
+  placeholder, 
+  onSearch, 
+  debounceMs = 300 
+}) => {
+  const [query, setQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (query.length >= 2 || query.length === 0) {
+        setIsLoading(true);
+        onSearch(query);
+        setIsLoading(false);
+      }
+    }, debounceMs);
+
+    return () => clearTimeout(timer);
+  }, [query, onSearch, debounceMs]);
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder={placeholder}
+          className="w-full pl-10 pr-4 py-2 border border-border rounded-md bg-background text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary focus:border-primary"
+        />
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
+          {isLoading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+          ) : (
+            <svg className="h-4 w-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+```

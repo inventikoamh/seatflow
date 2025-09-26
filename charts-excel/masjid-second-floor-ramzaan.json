@@ -1,0 +1,43 @@
+{
+    "seat_map_description": "Masjid Seat Map Structure based on A1:BC20 Excel Range",
+    "total_rows": 20,
+    "total_columns": 55,
+    "column_labels": "A to BC",
+    "seat_map": [
+      {
+        "row_number": 1,
+        "number_of_seats_in_row": "Count of non-'x' cells in row 1",
+        "seats": [
+          {
+            "column": "A",
+            "seat_content": "Seat number from cell A1 or 'x'"
+          },
+          {
+            "column": "B",
+            "seat_content": "Seat number from cell B1 or 'x'"
+          },
+          // ... (up to column BC)
+          {
+            "column": "BC",
+            "seat_content": "Seat number from cell BC1 or 'x'"
+          }
+        ]
+      },
+      // ... (Row 2 to Row 19 would follow a similar structure)
+      {
+        "row_number": 20,
+        "number_of_seats_in_row": "Count of non-'x' cells in row 20",
+        "seats": [
+          {
+            "column": "A",
+            "seat_content": "Seat number from cell A20 or 'x'"
+          },
+          // ... (up to column BC)
+          {
+            "column": "BC",
+            "seat_content": "Seat number from cell BC20 or 'x'"
+          }
+        ]
+      }
+    ]
+  }

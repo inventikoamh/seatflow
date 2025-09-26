@@ -1,0 +1,142 @@
+---
+globs: *.blade.php
+description: Laravel Blade template patterns and conventions
+---
+
+# Laravel Blade Template Rules
+
+## Layout Structure
+All Blade templates must extend the main layout defined in [resources/views/layouts/app.blade.php](mdc:resources/views/layouts/app.blade.php).
+
+### Required Structure
+```php
+@extends('layouts.app')
+
+@section('title', 'Page Title')
+
+@section('content')
+<!-- Page content here -->
+@endsection
+```
+
+### Theme Integration
+- All pages must pass theme data to the layout
+- Use `$theme` variable from controllers
+- Ensure theme toggle is available on all pages
+
+### Form Handling
+```php
+<!-- CSRF Protection -->
+@csrf
+
+<!-- Method Spoofing -->
+@method('PUT')
+
+<!-- Error Display -->
+@error('field_name')
+    <p class="mt-1 text-sm text-destructive">{{ $message }}</p>
+@enderror
+
+<!-- Old Input Values -->
+<input value="{{ old('field_name', $model->field_name) }}">
+```
+
+### Authentication Checks
+```php
+@if(auth()->check())
+    <!-- Authenticated user content -->
+@else
+    <!-- Guest content -->
+@endif
+
+<!-- Current User -->
+{{ auth()->user()->name }}
+```
+
+### Conditional Rendering
+```php
+@if($condition)
+    <!-- Content -->
+@elseif($otherCondition)
+    <!-- Other content -->
+@else
+    <!-- Default content -->
+@endif
+
+@unless($condition)
+    <!-- Content when condition is false -->
+@endunless
+```
+
+### Loops and Collections
+```php
+@foreach($items as $item)
+    <div>{{ $item->name }}</div>
+@endforeach
+
+@forelse($items as $item)
+    <div>{{ $item->name }}</div>
+@empty
+    <p>No items found</p>
+@endforelse
+```
+
+### Asset Loading
+```php
+<!-- Vite Assets -->
+@vite(['resources/css/app.css', 'resources/js/app.tsx'])
+
+<!-- Static Assets -->
+<img src="{{ asset('images/logo.png') }}" alt="Logo">
+```
+
+### Route Helpers
+```php
+<!-- Named Routes -->
+<a href="{{ route('profile.show') }}">Profile</a>
+
+<!-- Route Parameters -->
+<a href="{{ route('users.show', $user->id) }}">View User</a>
+
+<!-- Current Route Check -->
+@if(request()->routeIs('dashboard'))
+    <!-- Dashboard specific content -->
+@endif
+```
+
+### Session Messages
+```php
+@if(session('success'))
+    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+        {{ session('error') }}
+    </div>
+@endif
+```
+
+### Component Usage
+```php
+<!-- Include Components -->
+@include('components.header')
+
+<!-- Component with Data -->
+@include('components.card', ['title' => 'Card Title', 'content' => 'Card Content'])
+```
+
+### Security Best Practices
+- Always use `{{ }}` for output escaping
+- Use `{!! !!}` only for trusted HTML
+- Validate all user input
+- Use CSRF tokens for forms
+- Sanitize data before display
+
+### Performance Considerations
+- Use `@once` directive for expensive operations
+- Cache expensive computations
+- Minimize database queries in views
+- Use eager loading to prevent N+1 queries

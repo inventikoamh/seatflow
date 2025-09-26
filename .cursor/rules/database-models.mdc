@@ -1,0 +1,219 @@
+---
+globs: *.php
+description: Database models and Eloquent patterns
+---
+
+# Database Models and Eloquent Rules
+
+## Model Structure
+Follow the patterns established in [app/Models/User.php](mdc:app/Models/User.php).
+
+### Model Definition
+```php
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
+
+class User extends Authenticatable
+{
+    use HasApiTokens, HasFactory, Notifiable;
+
+    protected $fillable = [
+        'first_name',
+        'last_name',
+        'email',
+        'mobile',
+        'password',
+        'theme_preference',
+    ];
+
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+            'theme_preference' => 'string',
+        ];
+    }
+}
+```
+
+### Accessor Methods
+```php
+// Computed attributes
+public function getFullNameAttribute(): string
+{
+    if ($this->first_name && $this->last_name) {
+        return $this->first_name . ' ' . $this->last_name;
+    }
+    return $this->name;
+}
+
+public function getDisplayNameAttribute(): string
+{
+    return $this->first_name ?: $this->name;
+}
+```
+
+### Mutator Methods
+```php
+// Attribute mutators
+public function setPasswordAttribute($value): void
+{
+    $this->attributes['password'] = Hash::make($value);
+}
+
+public function setFirstNameAttribute($value): void
+{
+    $this->attributes['first_name'] = ucfirst(strtolower($value));
+}
+```
+
+### Relationships
+```php
+// One-to-Many
+public function posts()
+{
+    return $this->hasMany(Post::class);
+}
+
+// Many-to-Many
+public function roles()
+{
+    return $this->belongsToMany(Role::class);
+}
+
+// One-to-One
+public function profile()
+{
+    return $this->hasOne(Profile::class);
+}
+```
+
+### Scopes
+```php
+// Query scopes
+public function scopeActive($query)
+{
+    return $query->where('status', 'active');
+}
+
+public function scopeByTheme($query, $theme)
+{
+    return $query->where('theme_preference', $theme);
+}
+```
+
+### Validation Rules
+```php
+// Model validation
+public static function validationRules(): array
+{
+    return [
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|email|unique:users,email',
+        'mobile' => 'nullable|string|max:20',
+        'password' => 'required|string|min:8',
+    ];
+}
+```
+
+### Database Migrations
+Follow the pattern in [database/migrations/2025_09_24_140422_add_profile_fields_to_users_table.php](mdc:database/migrations/2025_09_24_140422_add_profile_fields_to_users_table.php):
+
+```php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('first_name')->nullable()->after('name');
+            $table->string('last_name')->nullable()->after('first_name');
+            $table->string('mobile')->nullable()->after('last_name');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn(['first_name', 'last_name', 'mobile']);
+        });
+    }
+};
+```
+
+### Timezone Handling
+```php
+// Ensure all timestamps use Asia/Kolkata timezone
+protected function casts(): array
+{
+    return [
+        'created_at' => 'datetime:Asia/Kolkata',
+        'updated_at' => 'datetime:Asia/Kolkata',
+        'email_verified_at' => 'datetime:Asia/Kolkata',
+    ];
+}
+```
+
+### Factory Patterns
+```php
+// Model factories
+public function definition(): array
+{
+    return [
+        'first_name' => $this->faker->firstName(),
+        'last_name' => $this->faker->lastName(),
+        'email' => $this->faker->unique()->safeEmail(),
+        'mobile' => $this->faker->phoneNumber(),
+        'password' => Hash::make('password'),
+        'theme_preference' => $this->faker->randomElement(['light', 'dark']),
+    ];
+}
+```
+
+### Seeder Patterns
+```php
+// Database seeders
+public function run(): void
+{
+    User::create([
+        'first_name' => 'Admin',
+        'last_name' => 'User',
+        'name' => 'Admin User',
+        'email' => 'admin@seatflow.com',
+        'password' => Hash::make('password'),
+        'theme_preference' => 'light',
+    ]);
+}
+```
+
+### Security Best Practices
+- Always use `$fillable` or `$guarded` arrays
+- Hash passwords using `Hash::make()`
+- Use `$hidden` for sensitive fields
+- Validate input data
+- Use proper casting for data types
+- Implement soft deletes when needed
+
+### Performance Considerations
+- Use eager loading to prevent N+1 queries
+- Add database indexes for frequently queried fields
+- Use database transactions for complex operations
+- Implement caching for expensive operations

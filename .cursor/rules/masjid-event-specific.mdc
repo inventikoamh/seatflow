@@ -1,0 +1,552 @@
+---
+globs: *.php,*.blade.php,*.tsx
+description: Event-specific rules and patterns for Ramzaan and Ashara seat allocation
+---
+
+# Event-Specific Rules for Masjid Seat Allocation
+
+## Ramzaan Event Rules
+
+### Ramzaan Characteristics
+- **Duration**: 30 days (Islamic month)
+- **Frequency**: Daily prayers (5 times per day)
+- **Peak Times**: Maghrib (evening) and Isha (night) prayers
+- **Capacity Requirements**: Higher capacity needed for evening prayers
+- **Family Preference**: Families prefer to sit together when possible
+
+### Ramzaan Allocation Logic
+```php
+// app/Services/RamzaanAllocationService.php
+class RamzaanAllocationService extends SeatAllocationService
+{
+    public function allocateForRamzaan(Event $event): array
+    {
+        $rules = [
+            'daily_allocation' => true,
+            'peak_time_priority' => true,
+            'family_grouping' => true,
+            'contribution_priority' => true,
+            'sector_consideration' => false
+        ];
+
+        return $this->allocateWithRules($event, $rules);
+    }
+
+    protected function getPeakTimeCapacity(Event $event): array
+    {
+        return [
+            'maghrib' => $event->capacity_men * 0.8, // 80% for evening
+            'isha' => $event->capacity_men * 0.9,    // 90% for night
+            'other' => $event->capacity_men * 0.5     // 50% for other times
+        ];
+    }
+
+    protected function prioritizeFamilyGrouping(Sabeel $sabeel): bool
+    {
+        // Ramzaan allows family grouping in same section
+        return $sabeel->mumineen()->count() >= 2;
+    }
+}
+```
+
+### Ramzaan UI Components
+```tsx
+// resources/js/components/RamzaanAllocation.tsx
+interface RamzaanAllocationProps {
+  event: Event;
+  allocations: SeatAllocation[];
+}
+
+export const RamzaanAllocation: React.FC<RamzaanAllocationProps> = ({ event, allocations }) => {
+  const [selectedPrayer, setSelectedPrayer] = useState<'maghrib' | 'isha' | 'other'>('maghrib');
+  
+  const prayerTimes = {
+    maghrib: 'Evening Prayer (Peak)',
+    isha: 'Night Prayer (Peak)', 
+    other: 'Other Prayers'
+  };
+
+  return (
+    <div className="ramzaan-allocation">
+      <div className="prayer-time-selector">
+        {Object.entries(prayerTimes).map(([key, label]) => (
+          <button
+            key={key}
+            className={`prayer-btn ${selectedPrayer === key ? 'active' : ''}`}
+            onClick={() => setSelectedPrayer(key as any)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      
+      <div className="capacity-indicator">
+        <div className="men-capacity">
+          <span>Men: {allocations.filter(a => a.mumin.gender === 'male').length}</span>
+          <div className="capacity-bar">
+            <div 
+              className="capacity-fill"
+              style={{ 
+                width: `${(allocations.filter(a => a.mumin.gender === 'male').length / event.capacity_men) * 100}%` 
+              }}
+            />
+          </div>
+        </div>
+        
+        <div className="women-capacity">
+          <span>Women: {allocations.filter(a => a.mumin.gender === 'female').length}</span>
+          <div className="capacity-bar">
+            <div 
+              className="capacity-fill"
+              style={{ 
+                width: `${(allocations.filter(a => a.mumin.gender === 'female').length / event.capacity_women) * 100}%` 
+              }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+## Ashara Event Rules
+
+### Ashara Characteristics
+- **Duration**: 10 days (Muharram)
+- **Frequency**: Daily majlis (gatherings)
+- **Peak Times**: 7th, 8th, 9th, 10th Muharram
+- **Special Requirements**: Elderly preference, accessibility needs
+- **Sector Consideration**: May group by sectors for community bonding
+
+### Ashara Allocation Logic
+```php
+// app/Services/AsharaAllocationService.php
+class AsharaAllocationService extends SeatAllocationService
+{
+    public function allocateForAshara(Event $event): array
+    {
+        $rules = [
+            'daily_allocation' => true,
+            'elderly_preference' => true,
+            'accessibility_priority' => true,
+            'sector_grouping' => true,
+            'contribution_priority' => true,
+            'special_needs_accommodation' => true
+        ];
+
+        return $this->allocateWithRules($event, $rules);
+    }
+
+    protected function prioritizeElderly(Mumin $mumin): int
+    {
+        if ($mumin->age >= 65) return 100;
+        if ($mumin->age >= 50) return 75;
+        return 50;
+    }
+
+    protected function getSectorPriority(Sabeel $sabeel): int
+    {
+        // Ashara may consider sector-based seating
+        $sectorPriorities = [
+            'ezzi' => 90,
+            'fakhri' => 85,
+            'hakimi' => 80,
+            'shujai' => 75
+        ];
+
+        return $sectorPriorities[$sabeel->sector] ?? 50;
+    }
+
+    protected function hasAccessibilityNeeds(Mumin $mumin): bool
+    {
+        // Check for special accessibility requirements
+        return $mumin->age >= 70 || $mumin->has_mobility_issues ?? false;
+    }
+}
+```
+
+### Ashara UI Components
+```tsx
+// resources/js/components/AsharaAllocation.tsx
+interface AsharaAllocationProps {
+  event: Event;
+  allocations: SeatAllocation[];
+}
+
+export const AsharaAllocation: React.FC<AsharaAllocationProps> = ({ event, allocations }) => {
+  const [selectedDay, setSelectedDay] = useState<number>(1);
+  
+  const muharramDays = Array.from({ length: 10 }, (_, i) => i + 1);
+  const peakDays = [7, 8, 9, 10];
+
+  return (
+    <div className="ashara-allocation">
+      <div className="muharram-day-selector">
+        {muharramDays.map(day => (
+          <button
+            key={day}
+            className={`day-btn ${selectedDay === day ? 'active' : ''} ${peakDays.includes(day) ? 'peak' : ''}`}
+            onClick={() => setSelectedDay(day)}
+          >
+            Day {day} {peakDays.includes(day) && '(Peak)'}
+          </button>
+        ))}
+      </div>
+      
+      <div className="special-requirements">
+        <div className="elderly-section">
+          <h3>Elderly & Accessibility</h3>
+          <div className="accessibility-indicators">
+            {allocations
+              .filter(a => a.mumin.age >= 65)
+              .map(allocation => (
+                <div key={allocation.id} className="elderly-allocation">
+                  <span>{allocation.mumin.name}</span>
+                  <span className="age">{allocation.mumin.age} years</span>
+                  <span className="sector">{allocation.sabeel.sector}</span>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+      </div>
+      
+      <div className="sector-distribution">
+        <h3>Sector Distribution</h3>
+        <div className="sector-chart">
+          {['ezzi', 'fakhri', 'hakimi', 'shujai'].map(sector => {
+            const count = allocations.filter(a => a.sabeel.sector === sector).length;
+            return (
+              <div key={sector} className="sector-bar">
+                <span className="sector-name">{sector}</span>
+                <div className="sector-count">{count}</div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+```
+
+## Event-Specific Blade Templates
+
+### Ramzaan Event View
+```blade
+{{-- resources/views/events/ramzaan.blade.php --}}
+@extends('layouts.app')
+
+@section('title', 'Ramzaan Seat Allocation')
+
+@section('content')
+<div class="container mx-auto px-4 py-8">
+    <div class="ramzaan-header">
+        <h1 class="text-3xl font-bold text-foreground mb-4">
+            Ramzaan {{ $event->start_date->format('Y') }} Seat Allocation
+        </h1>
+        
+        <div class="event-info bg-card p-6 rounded-lg border border-border">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Duration</h3>
+                    <p class="text-muted-foreground">
+                        {{ $event->start_date->format('M d') }} - {{ $event->end_date->format('M d, Y') }}
+                    </p>
+                </div>
+                
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Men Capacity</h3>
+                    <p class="text-muted-foreground">{{ number_format($event->capacity_men) }}</p>
+                </div>
+                
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Women Capacity</h3>
+                    <p class="text-muted-foreground">{{ number_format($event->capacity_women) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="prayer-times mt-8">
+        <h2 class="text-2xl font-semibold text-foreground mb-4">Prayer Time Allocations</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="prayer-card bg-card p-4 rounded-lg border border-border">
+                <h3 class="font-semibold text-foreground">Maghrib (Evening)</h3>
+                <p class="text-sm text-muted-foreground">Peak time - 80% capacity</p>
+                <div class="mt-2">
+                    <span class="text-lg font-bold text-primary">
+                        {{ $maghribAllocations->count() }}
+                    </span>
+                    <span class="text-muted-foreground"> allocated</span>
+                </div>
+            </div>
+            
+            <div class="prayer-card bg-card p-4 rounded-lg border border-border">
+                <h3 class="font-semibold text-foreground">Isha (Night)</h3>
+                <p class="text-sm text-muted-foreground">Peak time - 90% capacity</p>
+                <div class="mt-2">
+                    <span class="text-lg font-bold text-primary">
+                        {{ $ishaAllocations->count() }}
+                    </span>
+                    <span class="text-muted-foreground"> allocated</span>
+                </div>
+            </div>
+            
+            <div class="prayer-card bg-card p-4 rounded-lg border border-border">
+                <h3 class="font-semibold text-foreground">Other Prayers</h3>
+                <p class="text-sm text-muted-foreground">Regular capacity - 50%</p>
+                <div class="mt-2">
+                    <span class="text-lg font-bold text-primary">
+                        {{ $otherAllocations->count() }}
+                    </span>
+                    <span class="text-muted-foreground"> allocated</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @can('manage-events')
+    <div class="admin-actions mt-8">
+        <div class="flex gap-4">
+            <button 
+                onclick="allocateSeats()" 
+                class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
+            >
+                Run Seat Allocation
+            </button>
+            
+            <a 
+                href="{{ route('events.statistics', $event) }}" 
+                class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
+            >
+                View Statistics
+            </a>
+        </div>
+    </div>
+    @endcan
+</div>
+
+<script>
+function allocateSeats() {
+    if (confirm('This will run seat allocation for all families. Continue?')) {
+        fetch('{{ route("events.allocate", $event) }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(`Allocation completed!\nAllocated: ${data.results.allocated}\nPending: ${data.results.pending}\nRejected: ${data.results.rejected}`);
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error occurred during allocation');
+        });
+    }
+}
+</script>
+@endsection
+```
+
+### Ashara Event View
+```blade
+{{-- resources/views/events/ashara.blade.php --}}
+@extends('layouts.app')
+
+@section('title', 'Ashara Seat Allocation')
+
+@section('content')
+<div class="container mx-auto px-4 py-8">
+    <div class="ashara-header">
+        <h1 class="text-3xl font-bold text-foreground mb-4">
+            Ashara {{ $event->start_date->format('Y') }} Seat Allocation
+        </h1>
+        
+        <div class="event-info bg-card p-6 rounded-lg border border-border">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Duration</h3>
+                    <p class="text-muted-foreground">
+                        {{ $event->start_date->format('M d') }} - {{ $event->end_date->format('M d, Y') }}
+                    </p>
+                </div>
+                
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Peak Days</h3>
+                    <p class="text-muted-foreground">7th, 8th, 9th, 10th Muharram</p>
+                </div>
+                
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Elderly Priority</h3>
+                    <p class="text-muted-foreground">{{ $elderlyCount }} allocated</p>
+                </div>
+                
+                <div class="info-item">
+                    <h3 class="font-semibold text-foreground">Sector Grouping</h3>
+                    <p class="text-muted-foreground">Enabled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="muharram-days mt-8">
+        <h2 class="text-2xl font-semibold text-foreground mb-4">Muharram Day Allocations</h2>
+        
+        <div class="days-grid grid grid-cols-2 md:grid-cols-5 gap-4">
+            @foreach(range(1, 10) as $day)
+            <div class="day-card bg-card p-4 rounded-lg border border-border {{ in_array($day, [7,8,9,10]) ? 'border-primary' : '' }}">
+                <h3 class="font-semibold text-foreground">
+                    Day {{ $day }}
+                    @if(in_array($day, [7,8,9,10]))
+                        <span class="text-xs bg-primary text-primary-foreground px-2 py-1 rounded ml-2">Peak</span>
+                    @endif
+                </h3>
+                <div class="mt-2">
+                    <span class="text-lg font-bold text-primary">
+                        {{ $dayAllocations[$day] ?? 0 }}
+                    </span>
+                    <span class="text-muted-foreground"> allocated</span>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    <div class="sector-distribution mt-8">
+        <h2 class="text-2xl font-semibold text-foreground mb-4">Sector Distribution</h2>
+        
+        <div class="sectors-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+            @foreach(['ezzi', 'fakhri', 'hakimi', 'shujai'] as $sector)
+            <div class="sector-card bg-card p-4 rounded-lg border border-border">
+                <h3 class="font-semibold text-foreground capitalize">{{ $sector }}</h3>
+                <div class="mt-2">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Men:</span>
+                        <span class="font-semibold">{{ $sectorDistribution[$sector]['men'] ?? 0 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-muted-foreground">Women:</span>
+                        <span class="font-semibold">{{ $sectorDistribution[$sector]['women'] ?? 0 }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm font-semibold text-primary">
+                        <span>Total:</span>
+                        <span>{{ ($sectorDistribution[$sector]['men'] ?? 0) + ($sectorDistribution[$sector]['women'] ?? 0) }}</span>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+
+    @can('manage-events')
+    <div class="admin-actions mt-8">
+        <div class="flex gap-4">
+            <button 
+                onclick="allocateSeats()" 
+                class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
+            >
+                Run Ashara Allocation
+            </button>
+            
+            <a 
+                href="{{ route('events.statistics', $event) }}" 
+                class="bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90"
+            >
+                View Statistics
+            </a>
+        </div>
+    </div>
+    @endcan
+</div>
+@endsection
+```
+
+## Event-Specific API Endpoints
+
+### Ramzaan API Routes
+```php
+// routes/api.php
+Route::prefix('api/events')->middleware('auth')->group(function () {
+    Route::get('/ramzaan/{event}/prayer-times', [RamzaanController::class, 'getPrayerTimes']);
+    Route::post('/ramzaan/{event}/allocate-peak', [RamzaanController::class, 'allocatePeakTimes']);
+    Route::get('/ramzaan/{event}/family-groupings', [RamzaanController::class, 'getFamilyGroupings']);
+});
+
+// app/Http/Controllers/RamzaanController.php
+class RamzaanController extends Controller
+{
+    public function getPrayerTimes(Event $event)
+    {
+        return response()->json([
+            'maghrib' => $this->getAllocationsForPrayer($event, 'maghrib'),
+            'isha' => $this->getAllocationsForPrayer($event, 'isha'),
+            'other' => $this->getAllocationsForPrayer($event, 'other')
+        ]);
+    }
+
+    public function allocatePeakTimes(Request $request, Event $event)
+    {
+        $request->validate([
+            'prayer_time' => 'required|in:maghrib,isha',
+            'priority_families' => 'array'
+        ]);
+
+        $service = new RamzaanAllocationService();
+        $result = $service->allocatePeakTime($event, $request->prayer_time, $request->priority_families);
+
+        return response()->json($result);
+    }
+}
+```
+
+### Ashara API Routes
+```php
+// routes/api.php
+Route::prefix('api/events')->middleware('auth')->group(function () {
+    Route::get('/ashara/{event}/elderly-priority', [AsharaController::class, 'getElderlyPriority']);
+    Route::get('/ashara/{event}/sector-distribution', [AsharaController::class, 'getSectorDistribution']);
+    Route::post('/ashara/{event}/allocate-day', [AsharaController::class, 'allocateForDay']);
+});
+
+// app/Http/Controllers/AsharaController.php
+class AsharaController extends Controller
+{
+    public function getElderlyPriority(Event $event)
+    {
+        $elderly = SeatAllocation::where('event_id', $event->id)
+            ->whereHas('mumin', function ($q) {
+                $q->where('age', '>=', 65);
+            })
+            ->with(['mumin', 'sabeel'])
+            ->orderBy('priority_score', 'desc')
+            ->get();
+
+        return response()->json($elderly);
+    }
+
+    public function getSectorDistribution(Event $event)
+    {
+        $distribution = SeatAllocation::where('event_id', $event->id)
+            ->where('status', 'confirmed')
+            ->with('sabeel')
+            ->get()
+            ->groupBy('sabeel.sector')
+            ->map(function ($allocations) {
+                return [
+                    'total' => $allocations->count(),
+                    'men' => $allocations->where('mumin.gender', 'male')->count(),
+                    'women' => $allocations->where('mumin.gender', 'female')->count(),
+                    'elderly' => $allocations->where('mumin.age', '>=', 65)->count()
+                ];
+            });
+
+        return response()->json($distribution);
+    }
+}
+```

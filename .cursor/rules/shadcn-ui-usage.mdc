@@ -1,0 +1,111 @@
+---
+globs: *.blade.php,*.tsx,*.jsx,*.css
+description: Proper shadcn/ui component usage and styling
+---
+
+# shadcn/ui Component Usage Rules
+
+## Component Structure
+All UI components must follow shadcn/ui patterns and use the design system defined in [tailwind.config.js](mdc:tailwind.config.js).
+
+### Color System
+Use the semantic color tokens defined in [resources/css/app.css](mdc:resources/css/app.css):
+```css
+/* Primary colors */
+bg-primary text-primary-foreground
+bg-secondary text-secondary-foreground
+
+/* Surface colors */
+bg-background text-foreground
+bg-card text-card-foreground
+bg-popover text-popover-foreground
+
+/* Utility colors */
+bg-muted text-muted-foreground
+bg-accent text-accent-foreground
+bg-destructive text-destructive-foreground
+```
+
+### Component Patterns
+
+#### Buttons
+```html
+<!-- Primary button -->
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+
+<!-- Secondary button -->
+<button class="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2">
+```
+
+#### Form Elements
+```html
+<!-- Input field -->
+<input class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+
+<!-- Label -->
+<label class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+```
+
+#### Cards
+```html
+<!-- Card container -->
+<div class="rounded-lg border bg-card text-card-foreground shadow-sm">
+  <div class="p-6">
+    <!-- Card content -->
+  </div>
+</div>
+```
+
+### Border Radius System
+Use consistent border radius values:
+- `rounded-sm` - Small elements
+- `rounded-md` - Default elements  
+- `rounded-lg` - Cards and containers
+- `rounded-xl` - Large containers
+
+### Spacing System
+Follow the 4px spacing scale:
+- `space-1` = 4px
+- `space-2` = 8px
+- `space-3` = 12px
+- `space-4` = 16px
+- `space-6` = 24px
+- `space-8` = 32px
+
+### Typography Scale
+```html
+<h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">
+<h2 class="scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight">
+<h3 class="scroll-m-20 text-2xl font-semibold tracking-tight">
+<h4 class="scroll-m-20 text-xl font-semibold tracking-tight">
+<p class="leading-7 [&:not(:first-child)]:mt-6">
+<blockquote class="mt-6 border-l-2 pl-6 italic">
+```
+
+### Animation Classes
+Use consistent animation patterns:
+```html
+<!-- Fade in animation -->
+<div class="animate-fade-in">
+
+<!-- Slide in animation -->
+<div class="animate-slide-in">
+
+<!-- Hover transitions -->
+<div class="transition-colors hover:bg-accent">
+```
+
+### Focus States
+All interactive elements must have proper focus states:
+```html
+<div class="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+```
+
+### Accessibility
+- Use proper ARIA labels
+- Ensure keyboard navigation works
+- Maintain color contrast ratios
+- Use semantic HTML elements
+
+### Examples from Codebase
+Reference [resources/views/auth/login.blade.php](mdc:resources/views/auth/login.blade.php) and [resources/views/profile/show.blade.php](mdc:resources/views/profile/show.blade.php) for proper shadcn/ui implementation patterns.

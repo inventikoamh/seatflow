@@ -1,0 +1,47 @@
+---
+alwaysApply: true
+description: Theme consistency and dark/light mode support
+---
+
+# Theme Consistency Rules
+
+## Theme System
+All UI elements must support both light and dark themes using the CSS custom properties defined in [resources/css/app.css](mdc:resources/css/app.css).
+
+### Required Theme Classes
+- Always use semantic color classes: `bg-background`, `text-foreground`, `border-border`
+- Use theme-aware colors: `bg-card`, `text-muted-foreground`, `bg-accent`
+- Never use hardcoded colors like `bg-white`, `text-black`, `bg-gray-100`
+
+### Theme Toggle Implementation
+- All pages must include theme toggle functionality
+- Use `data-theme-toggle` attribute for theme toggle buttons
+- Theme preference is stored per user in database via [app/Models/User.php](mdc:app/Models/User.php)
+
+### CSS Variables Usage
+```css
+/* Use these semantic color variables */
+--background: Light/Dark background
+--foreground: Light/Dark text
+--card: Card backgrounds
+--border: Border colors
+--primary: Primary brand color
+--muted: Muted text/backgrounds
+--accent: Accent colors
+```
+
+### Theme Transition
+- All elements must have smooth transitions: `transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease`
+- Use the `.dark` class on `<html>` element for dark mode
+- Theme switching is handled by [resources/js/app.tsx](mdc:resources/js/app.tsx)
+
+### Examples
+```html
+<!-- ✅ Correct -->
+<div class="bg-card text-foreground border-border">
+<button class="bg-primary text-primary-foreground hover:bg-primary/90">
+
+<!-- ❌ Wrong -->
+<div class="bg-white text-black border-gray-200">
+<button class="bg-blue-500 text-white hover:bg-blue-600">
+```
