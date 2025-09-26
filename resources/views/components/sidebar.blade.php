@@ -380,6 +380,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Fallback sidebar menu initialization...');
     
+    // Debug: Check what menu elements exist
+    console.log('=== MENU ELEMENTS DEBUG ===');
+    const menuElements = [
+        'users-menu-toggle', 'users-menu',
+        'roles-menu-toggle', 'roles-menu', 
+        'sabeels-menu-toggle', 'sabeels-menu',
+        'mumineen-menu-toggle', 'mumineen-menu',
+        'locations-menu-toggle', 'locations-menu',
+        'events-menu-toggle', 'events-menu',
+        'takhmeen-menu-toggle', 'takhmeen-menu',
+        'noc-menu-toggle', 'noc-menu',
+        'settings-menu-toggle', 'settings-menu'
+    ];
+    
+    menuElements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`${id}:`, element ? 'FOUND' : 'NOT FOUND');
+    });
+    console.log('=== END MENU DEBUG ===');
+    
     // Generic menu toggle function
     function setupMenuToggle(toggleId, menuId, arrowId) {
         const toggle = document.getElementById(toggleId);
@@ -417,6 +437,36 @@ document.addEventListener('DOMContentLoaded', function() {
     setupMenuToggle('noc-menu-toggle', 'noc-menu', 'noc-menu-arrow');
     setupMenuToggle('settings-menu-toggle', 'settings-menu', 'settings-menu-arrow');
     
+    // Additional debug for Takhmeen menu
+    const takhmeenToggle = document.getElementById('takhmeen-menu-toggle');
+    const takhmeenMenu = document.getElementById('takhmeen-menu');
+    if (takhmeenToggle && takhmeenMenu) {
+        console.log('Takhmeen menu elements found:', { takhmeenToggle, takhmeenMenu });
+        takhmeenToggle.addEventListener('click', function(e) {
+            console.log('Takhmeen menu clicked!');
+            e.preventDefault();
+            takhmeenMenu.classList.toggle('hidden');
+            console.log('Takhmeen menu hidden:', takhmeenMenu.classList.contains('hidden'));
+        });
+    } else {
+        console.log('Takhmeen menu elements NOT found:', { takhmeenToggle, takhmeenMenu });
+    }
+
+    // Additional debug for NOC menu
+    const nocToggle = document.getElementById('noc-menu-toggle');
+    const nocMenu = document.getElementById('noc-menu');
+    if (nocToggle && nocMenu) {
+        console.log('NOC menu elements found:', { nocToggle, nocMenu });
+        nocToggle.addEventListener('click', function(e) {
+            console.log('NOC menu clicked!');
+            e.preventDefault();
+            nocMenu.classList.toggle('hidden');
+            console.log('NOC menu hidden:', nocMenu.classList.contains('hidden'));
+        });
+    } else {
+        console.log('NOC menu elements NOT found:', { nocToggle, nocMenu });
+    }
+
     // Additional debug for Settings menu
     const settingsToggle = document.getElementById('settings-menu-toggle');
     const settingsMenu = document.getElementById('settings-menu');
