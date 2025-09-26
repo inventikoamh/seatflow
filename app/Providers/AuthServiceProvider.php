@@ -32,6 +32,7 @@ class AuthServiceProvider extends ServiceProvider
             'view-events', 'create-events', 'edit-events', 'delete-events', 'manage-events',
             'view-takhmeen', 'create-takhmeen', 'edit-takhmeen', 'delete-takhmeen', 'manage-takhmeen',
             'view-noc', 'create-noc', 'edit-noc', 'delete-noc', 'manage-noc',
+            'view-settings', 'manage-migrations', 'manage-seeders', 'manage-storage', 'manage-settings', // Added Settings permissions
         ];
 
         foreach ($permissions as $permission) {

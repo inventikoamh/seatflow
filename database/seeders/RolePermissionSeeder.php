@@ -65,12 +65,19 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'Delete Takhmeen', 'slug' => 'delete-takhmeen', 'module' => 'takhmeen', 'description' => 'Can delete takhmeen'],
             ['name' => 'Manage Takhmeen', 'slug' => 'manage-takhmeen', 'module' => 'takhmeen', 'description' => 'Full takhmeen management access'],
 
-            // NOC Management
-            ['name' => 'View NOC', 'slug' => 'view-noc', 'module' => 'noc', 'description' => 'Can view NOC list'],
-            ['name' => 'Create NOC', 'slug' => 'create-noc', 'module' => 'noc', 'description' => 'Can create new NOC'],
-            ['name' => 'Edit NOC', 'slug' => 'edit-noc', 'module' => 'noc', 'description' => 'Can edit existing NOC'],
-            ['name' => 'Delete NOC', 'slug' => 'delete-noc', 'module' => 'noc', 'description' => 'Can delete NOC'],
-            ['name' => 'Manage NOC', 'slug' => 'manage-noc', 'module' => 'noc', 'description' => 'Full NOC management access'],
+        // NOC Management
+        ['name' => 'View NOC', 'slug' => 'view-noc', 'module' => 'noc', 'description' => 'Can view NOC list'],
+        ['name' => 'Create NOC', 'slug' => 'create-noc', 'module' => 'noc', 'description' => 'Can create new NOC'],
+        ['name' => 'Edit NOC', 'slug' => 'edit-noc', 'module' => 'noc', 'description' => 'Can edit existing NOC'],
+        ['name' => 'Delete NOC', 'slug' => 'delete-noc', 'module' => 'noc', 'description' => 'Can delete NOC'],
+        ['name' => 'Manage NOC', 'slug' => 'manage-noc', 'module' => 'noc', 'description' => 'Full NOC management access'],
+        
+        // Settings Management (Admin Only)
+        ['name' => 'View Settings', 'slug' => 'view-settings', 'module' => 'settings', 'description' => 'Can view settings dashboard'],
+        ['name' => 'Manage Migrations', 'slug' => 'manage-migrations', 'module' => 'settings', 'description' => 'Can run and manage database migrations'],
+        ['name' => 'Manage Seeders', 'slug' => 'manage-seeders', 'module' => 'settings', 'description' => 'Can run and manage database seeders'],
+        ['name' => 'Manage Storage', 'slug' => 'manage-storage', 'module' => 'settings', 'description' => 'Can manage file storage and cache'],
+        ['name' => 'Manage Settings', 'slug' => 'manage-settings', 'module' => 'settings', 'description' => 'Full settings management access'],
         ];
 
         foreach ($permissions as $permission) {

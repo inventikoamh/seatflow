@@ -87,6 +87,21 @@ Route::middleware('auth')->group(function () {
     Route::post('noc/{noc}/revoke', [App\Http\Controllers\NocController::class, 'revoke'])->name('noc.revoke');
     Route::resource('noc', App\Http\Controllers\NocController::class);
     
+    // Settings routes (Admin only)
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/', [App\Http\Controllers\SettingsController::class, 'index'])->name('index');
+        Route::get('/migrations', [App\Http\Controllers\SettingsController::class, 'migrations'])->name('migrations');
+        Route::post('/migrations/run-all', [App\Http\Controllers\SettingsController::class, 'runAllMigrations'])->name('migrations.run-all');
+        Route::post('/migrations/run', [App\Http\Controllers\SettingsController::class, 'runMigration'])->name('migrations.run');
+        Route::post('/migrations/rollback', [App\Http\Controllers\SettingsController::class, 'rollbackMigration'])->name('migrations.rollback');
+        Route::get('/seeders', [App\Http\Controllers\SettingsController::class, 'seeders'])->name('seeders');
+        Route::post('/seeders/run-all', [App\Http\Controllers\SettingsController::class, 'runAllSeeders'])->name('seeders.run-all');
+        Route::post('/seeders/run', [App\Http\Controllers\SettingsController::class, 'runSeeder'])->name('seeders.run');
+        Route::get('/storage', [App\Http\Controllers\SettingsController::class, 'storage'])->name('storage');
+        Route::post('/storage/link', [App\Http\Controllers\SettingsController::class, 'createStorageLink'])->name('storage.link');
+        Route::post('/cache/clear', [App\Http\Controllers\SettingsController::class, 'clearCache'])->name('cache.clear');
+    });
+    
     // Explicit route model binding for mumineen
     Route::model('mumin', App\Models\Mumin::class);
     

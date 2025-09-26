@@ -321,15 +321,51 @@
             <span>Reports</span>
         </a>
 
-        <!-- Settings -->
-        <a href="#" 
-           class="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            <span>Settings</span>
-        </a>
+        <!-- Settings Management (Admin Only) -->
+        @if(auth()->user()->hasRole('administrator'))
+        <div class="space-y-1">
+            <button 
+                id="settings-menu-toggle"
+                class="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
+            >
+                <div class="flex items-center space-x-3">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Settings</span>
+                </div>
+                <svg class="h-4 w-4 transition-transform" id="settings-menu-arrow">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            
+            <div id="settings-menu" class="hidden ml-6 space-y-1">
+                <a href="{{ route('settings.index') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                    Dashboard
+                </a>
+                <a href="{{ route('settings.migrations') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                    Migrations
+                </a>
+                <a href="{{ route('settings.seeders') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                    Seeders
+                </a>
+                <a href="{{ route('settings.storage') }}" class="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors">
+                    Storage
+                </a>
+            </div>
+        </div>
+        @endif
+
+        <!-- Debug Info (temporary) -->
+        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <div class="text-yellow-800">
+                <strong>Debug Info:</strong><br>
+                User: {{ auth()->user()->email }}<br>
+                Has admin role: {{ auth()->user()->hasRole('administrator') ? 'Yes' : 'No' }}<br>
+                Roles: {{ auth()->user()->roles->pluck('name')->implode(', ') }}
+            </div>
+        </div>
     </nav>
 
     <!-- Sidebar Footer -->
@@ -389,6 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setupMenuToggle('events-menu-toggle', 'events-menu', 'events-menu-arrow');
     setupMenuToggle('takhmeen-menu-toggle', 'takhmeen-menu', 'takhmeen-menu-arrow');
     setupMenuToggle('noc-menu-toggle', 'noc-menu', 'noc-menu-arrow');
+    setupMenuToggle('settings-menu-toggle', 'settings-menu', 'settings-menu-arrow');
     
     // Additional debug for takhmeen menu
     const takhmeenToggle = document.getElementById('takhmeen-menu-toggle');
@@ -418,6 +455,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         console.log('NOC menu elements NOT found:', { nocToggle, nocMenu });
+    }
+
+    // Additional debug for Settings menu
+    const settingsToggle = document.getElementById('settings-menu-toggle');
+    const settingsMenu = document.getElementById('settings-menu');
+    if (settingsToggle && settingsMenu) {
+        console.log('Settings menu elements found:', { settingsToggle, settingsMenu });
+        settingsToggle.addEventListener('click', function(e) {
+            console.log('Settings menu clicked!');
+            e.preventDefault();
+            settingsMenu.classList.toggle('hidden');
+            console.log('Settings menu hidden:', settingsMenu.classList.contains('hidden'));
+        });
+    } else {
+        console.log('Settings menu elements NOT found:', { settingsToggle, settingsMenu });
     }
 
     // Sidebar close functionality
