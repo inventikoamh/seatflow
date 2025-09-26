@@ -16,6 +16,21 @@
         </a>
     </div>
 
+    <!-- Success/Error Messages -->
+    @if(session('success'))
+        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded mb-6">
+            <h4 class="font-semibold mb-2">Operation Completed Successfully:</h4>
+            <pre class="text-sm whitespace-pre-wrap">{{ session('success') }}</pre>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-6">
+            <h4 class="font-semibold mb-2">Operation Failed:</h4>
+            <pre class="text-sm whitespace-pre-wrap">{{ session('error') }}</pre>
+        </div>
+    @endif
+
     <!-- Storage Status -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <!-- Storage Directory -->
@@ -51,10 +66,16 @@
         <!-- Public Storage Link -->
         <div class="bg-card p-6 rounded-lg border border-border">
             <div class="flex items-center mb-4">
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                <div class="w-12 h-12 {{ $storageInfo['is_linked'] ? 'bg-green-100' : 'bg-red-100' }} rounded-lg flex items-center justify-center mr-4">
+                    @if($storageInfo['is_linked'])
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                    @else
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    @endif
                 </div>
                 <div>
                     <h3 class="text-lg font-semibold text-foreground">Public Storage Link</h3>
@@ -74,6 +95,14 @@
                         {{ \App\Http\Controllers\SettingsController::formatBytes($storageInfo['public_storage_size']) }}
                     </span>
                 </div>
+                @if($storageInfo['is_linked'] && $storageInfo['link_target'])
+                <div class="flex justify-between">
+                    <span class="text-sm text-muted-foreground">Target:</span>
+                    <span class="text-sm font-medium text-foreground truncate ml-2" title="{{ $storageInfo['link_target'] }}">
+                        {{ basename($storageInfo['link_target']) }}
+                    </span>
+                </div>
+                @endif
             </div>
         </div>
     </div>

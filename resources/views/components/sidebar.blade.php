@@ -1,7 +1,7 @@
 <!-- Sidebar -->
-<div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 {{ $sidebarOpen ?? false ? 'translate-x-0' : '-translate-x-full' }}">
+<div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border transform transition-transform duration-300 ease-in-out lg:translate-x-0 {{ $sidebarOpen ?? false ? 'translate-x-0' : '-translate-x-full' }} flex flex-col">
     <!-- Sidebar Header -->
-    <div class="flex items-center justify-between h-16 px-6 border-b border-border">
+    <div class="flex items-center justify-between h-16 px-6 border-b border-border flex-shrink-0">
         <div class="flex items-center space-x-3">
             <div class="h-8 w-8 rounded-md bg-primary flex items-center justify-center">
                 <svg class="h-5 w-5 text-primary-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -23,7 +23,7 @@
     </div>
 
     <!-- Navigation Menu -->
-    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+    <nav class="flex-1 px-4 py-6 space-y-2 overflow-y-auto min-h-0">
         <!-- Dashboard -->
         <a href="{{ route('dashboard') }}" 
            class="flex items-center space-x-3 px-3 py-2 rounded-md text-sm font-medium transition-colors {{ request()->routeIs('dashboard') ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground hover:bg-accent' }}">
@@ -356,20 +356,10 @@
             </div>
         </div>
         @endif
-
-        <!-- Debug Info (temporary) -->
-        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs">
-            <div class="text-yellow-800">
-                <strong>Debug Info:</strong><br>
-                User: {{ auth()->user()->email }}<br>
-                Has admin role: {{ auth()->user()->hasRole('administrator') ? 'Yes' : 'No' }}<br>
-                Roles: {{ auth()->user()->roles->pluck('name')->implode(', ') }}
-            </div>
-        </div>
     </nav>
 
     <!-- Sidebar Footer -->
-    <div class="p-4 border-t border-border">
+    <div class="p-4 border-t border-border flex-shrink-0">
         <div class="flex items-center space-x-3 px-3 py-2">
             <div class="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-medium">
                 {{ substr(auth()->user()->display_name, 0, 1) }}
@@ -427,36 +417,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setupMenuToggle('noc-menu-toggle', 'noc-menu', 'noc-menu-arrow');
     setupMenuToggle('settings-menu-toggle', 'settings-menu', 'settings-menu-arrow');
     
-    // Additional debug for takhmeen menu
-    const takhmeenToggle = document.getElementById('takhmeen-menu-toggle');
-    const takhmeenMenu = document.getElementById('takhmeen-menu');
-    if (takhmeenToggle && takhmeenMenu) {
-        console.log('Takhmeen menu elements found:', { takhmeenToggle, takhmeenMenu });
-        takhmeenToggle.addEventListener('click', function(e) {
-            console.log('Takhmeen menu clicked!');
-            e.preventDefault();
-            takhmeenMenu.classList.toggle('hidden');
-            console.log('Takhmeen menu hidden:', takhmeenMenu.classList.contains('hidden'));
-        });
-    } else {
-        console.log('Takhmeen menu elements NOT found:', { takhmeenToggle, takhmeenMenu });
-    }
-
-    // Additional debug for NOC menu
-    const nocToggle = document.getElementById('noc-menu-toggle');
-    const nocMenu = document.getElementById('noc-menu');
-    if (nocToggle && nocMenu) {
-        console.log('NOC menu elements found:', { nocToggle, nocMenu });
-        nocToggle.addEventListener('click', function(e) {
-            console.log('NOC menu clicked!');
-            e.preventDefault();
-            nocMenu.classList.toggle('hidden');
-            console.log('NOC menu hidden:', nocMenu.classList.contains('hidden'));
-        });
-    } else {
-        console.log('NOC menu elements NOT found:', { nocToggle, nocMenu });
-    }
-
     // Additional debug for Settings menu
     const settingsToggle = document.getElementById('settings-menu-toggle');
     const settingsMenu = document.getElementById('settings-menu');
